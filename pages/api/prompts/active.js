@@ -1,12 +1,21 @@
 import { connectToDatabase } from '@/lib/db';
 import { Prompt } from '@/models/Debate';
-import { scheduleDuePrompts } from '@/lib/scheduler';
+import { scheduleDuePrompts, ensureFiveActivePrompts, evaluateExpiredTriads } from '@/lib/scheduler';
+import { System } from '@/models/System';
 
 export default async function handler(req, res) {
   await connectToDatabase();
-  // Opportunistic backstop: if any prompts expired, schedule triads now
+
   try {
-    await scheduleDuePrompts();
+    const sys = (await System.findOne({ key: 'cron' })) || (await System.create({ key: 'cron', lastSweepAt: new Date(0) }));
+    const now = new Date();
+    if (!sys.lastSweepAt || now.getTime() - new Date(sys.lastSweepAt).getTime() > 60 * 1000) {
+      await scheduleDuePrompts();
+      await ensureFiveActivePrompts();
+      await evaluateExpiredTriads();
+      sys.lastSweepAt = new Date();
+      await sys.save();
+    }
   } catch {}
 
   const now = new Date();
