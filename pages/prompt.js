@@ -17,6 +17,7 @@ export default function PromptPage() {
   const [loadingId, setLoadingId] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [selectedPrompt, setSelectedPrompt] = useState(null);
 
   // User-submitted state
   const [newText, setNewText] = useState('');
@@ -37,6 +38,14 @@ export default function PromptPage() {
     }
     return () => timers.forEach(clearInterval);
   }, [prompts]);
+
+  const aiPrompts = useMemo(() => {
+    return prompts.filter((p) => !(p.category === 'user' || (user?._id && p.createdBy === user._id)));
+  }, [prompts, user?._id]);
+
+  const userPrompts = useMemo(() => {
+    return prompts.filter((p) => (p.category === 'user' || (user?._id && p.createdBy === user._id)));
+  }, [prompts, user?._id]);
 
   if (!user) return <div className="p-4">Please log in.</div>;
 
@@ -106,49 +115,102 @@ export default function PromptPage() {
       </div>
 
       {tab === 'active' && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {prompts.length === 0 && <div className="text-gray-400">No active prompts right now. Check back later.</div>}
-          {prompts.map((p) => {
-            const remaining = remainingByPrompt[p._id] ?? null;
-            const mins = remaining != null ? Math.floor(remaining / 60) : null;
-            const secs = remaining != null ? remaining % 60 : null;
-            const myResponse = responses.get(p._id) || null;
-            const isUser = p.category === 'user' || (user?._id && p.createdBy === user._id);
-            return (
-              <div key={p._id} className={`rounded-xl border ${isUser ? 'border-fuchsia-800' : 'border-gold'} bg-gray-900/40 p-4 space-y-3 shadow-soft`}>
-                <div className="flex items-center justify-between">
-                  <div className="text-base font-medium flex items-center">
-                    <span>{p.text}</span>
-                    <PromptBadge p={p} />
-                  </div>
-                  {remaining != null && (
-                    <div className="text-xs text-gray-400">{mins}:{secs?.toString().padStart(2, '0')}</div>
-                  )}
+
+          {aiPrompts.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-xs uppercase tracking-wide text-gray-400">AI</div>
+              <div className="-mx-4 px-4 overflow-x-auto">
+                <div className="flex gap-4 py-2">
+                  {aiPrompts.map((p) => {
+                    const remaining = remainingByPrompt[p._id] ?? null;
+                    const mins = remaining != null ? Math.floor(remaining / 60) : null;
+                    const secs = remaining != null ? remaining % 60 : null;
+                    const myResponse = responses.get(p._id) || null;
+                    return (
+                      <button
+                        key={p._id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPrompt(p);
+                          setError('');
+                          setSuccess('');
+                        }}
+                        className={`relative text-left w-64 h-64 flex-shrink-0 rounded-xl border border-gold bg-gray-900/40 p-4 shadow-soft hover:bg-gray-900/60 transition flex flex-col overflow-hidden`}
+                      >
+                        {remaining != null && (
+                          <div className="absolute top-2 right-2 text-[11px] bg-gray-800/80 text-gray-200 rounded px-2 py-0.5 font-mono">
+                            {mins}:{secs?.toString().padStart(2, '0')}
+                          </div>
+                        )}
+                        <div className="text-sm font-medium text-gray-100 break-words">
+                          {p.text}
+                        </div>
+                        {myResponse && (
+                          <div className="mt-3 p-2 rounded-md bg-gray-900/60 border border-gray-800">
+                            <div className="text-[11px] uppercase tracking-wide text-gray-400 mb-1">Your response</div>
+                            <div className="text-xs text-gray-200 max-h-20 overflow-hidden break-words">{myResponse.text}</div>
+                          </div>
+                        )}
+                        <div className="mt-auto pt-3 text-xs text-gray-400 flex items-center justify-between">
+                          <span>{myResponse ? 'View' : 'Open'}</span>
+                          <PromptBadge p={p} />
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-                {myResponse ? (
-                  <div className="text-sm text-gray-300">You already responded: &quot;{myResponse.text}&quot;</div>
-                ) : (
-                  <form onSubmit={(e) => submitResponse(e, p._id)} className="space-y-2">
-                    <textarea
-                      value={textByPrompt[p._id] || ''}
-                      onChange={(e) => setTextByPrompt((prev) => ({ ...prev, [p._id]: e.target.value }))}
-                      placeholder="Write your response..."
-                      className="w-full min-h-24 rounded-md bg-gray-900 border border-gray-800 px-3 py-2 text-sm focus-gold"
-                    />
-                    {error && <div className="text-sm text-red-400">{error}</div>}
-                    {success && <div className="text-sm text-emerald-400">{success}</div>}
-                    <button
-                      type="submit"
-                      disabled={loadingId === p._id || !(textByPrompt[p._id] || '').trim()}
-                      className="rounded-md bg-brand-600 hover:bg-brand-500 px-3 py-2 text-sm font-medium"
-                    >
-                      {loadingId === p._id ? 'Submitting...' : 'Submit Response'}
-                    </button>
-                  </form>
-                )}
               </div>
-            );
-          })}
+            </div>
+          )}
+
+          {userPrompts.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-xs uppercase tracking-wide text-gray-400">User</div>
+              <div className="-mx-4 px-4 overflow-x-auto">
+                <div className="flex gap-4 py-2">
+                  {userPrompts.map((p) => {
+                    const remaining = remainingByPrompt[p._id] ?? null;
+                    const mins = remaining != null ? Math.floor(remaining / 60) : null;
+                    const secs = remaining != null ? remaining % 60 : null;
+                    const myResponse = responses.get(p._id) || null;
+                    return (
+                      <button
+                        key={p._id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPrompt(p);
+                          setError('');
+                          setSuccess('');
+                        }}
+                        className={`relative text-left w-64 h-64 flex-shrink-0 rounded-xl border border-fuchsia-800 bg-gray-900/40 p-4 shadow-soft hover:bg-gray-900/60 transition flex flex-col overflow-hidden`}
+                      >
+                        {remaining != null && (
+                          <div className="absolute top-2 right-2 text-[11px] bg-gray-800/80 text-gray-200 rounded px-2 py-0.5 font-mono">
+                            {mins}:{secs?.toString().padStart(2, '0')}
+                          </div>
+                        )}
+                        <div className="text-sm font-medium text-gray-100 break-words">
+                          {p.text}
+                        </div>
+                        {myResponse && (
+                          <div className="mt-3 p-2 rounded-md bg-gray-900/60 border border-gray-800">
+                            <div className="text-[11px] uppercase tracking-wide text-gray-400 mb-1">Your response</div>
+                            <div className="text-xs text-gray-200 max-h-20 overflow-hidden break-words">{myResponse.text}</div>
+                          </div>
+                        )}
+                        <div className="mt-auto pt-3 text-xs text-gray-400 flex items-center justify-between">
+                          <span>{myResponse ? 'View' : 'Open'}</span>
+                          <PromptBadge p={p} />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -187,6 +249,57 @@ export default function PromptPage() {
                 </li>
               ))}
             </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Modal for responding to a prompt */}
+      {selectedPrompt && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedPrompt(null)} />
+          <div className="relative w-full sm:max-w-xl bg-gray-950 border border-gray-800 rounded-xl shadow-xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setSelectedPrompt(null)}
+              className="absolute top-2 right-2 px-2 py-1 text-xs rounded-md bg-gray-800/80 hover:bg-gray-700"
+            >
+              Close
+            </button>
+
+            <div className="p-4 border-b border-gray-800">
+              <div className="text-xs text-gray-400">Prompt</div>
+              <div className="mt-1 text-base text-gray-100">{selectedPrompt.text}</div>
+            </div>
+
+            {(() => {
+              const myResponse = responses.get(selectedPrompt._id) || null;
+              if (myResponse) {
+                return (
+                  <div className="p-4 text-sm text-gray-300">
+                    You already responded: &quot;{myResponse.text}&quot;
+                  </div>
+                );
+              }
+              return (
+                <form onSubmit={(e) => submitResponse(e, selectedPrompt._id)} className="p-4 space-y-2">
+                  <textarea
+                    value={textByPrompt[selectedPrompt._id] || ''}
+                    onChange={(e) => setTextByPrompt((prev) => ({ ...prev, [selectedPrompt._id]: e.target.value }))}
+                    placeholder="Write your response..."
+                    className="w-full min-h-40 rounded-md bg-gray-900 border border-gray-800 px-3 py-2 text-sm focus-gold"
+                  />
+                  {error && <div className="text-sm text-red-400">{error}</div>}
+                  {success && <div className="text-sm text-emerald-400">{success}</div>}
+                  <button
+                    type="submit"
+                    disabled={loadingId === selectedPrompt._id || !(textByPrompt[selectedPrompt._id] || '').trim()}
+                    className="w-full rounded-md bg-brand-600 hover:bg-brand-500 px-3 py-2 text-sm font-medium"
+                  >
+                    {loadingId === selectedPrompt._id ? 'Submitting...' : 'Submit Response'}
+                  </button>
+                </form>
+              );
+            })()}
           </div>
         </div>
       )}

@@ -101,7 +101,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
           <div className="rounded-md bg-gray-800 px-2 py-1 font-mono">{mins != null ? `${mins}:${secs.toString().padStart(2, '0')}` : '--:--'}</div>
         </div>
       )}
-      <div ref={listRef} className="flex-1 overflow-y-auto space-y-2 p-3 pb-24 sm:pb-3">
+      <div ref={listRef} className="flex-1 overflow-y-auto space-y-2 p-3 pb-40 sm:pb-3">
         {messages.map((m) => (
           <div key={m._id} className={`flex ${m.senderId === user._id ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm shadow ${m.senderId === user._id ? 'bubble-mine' : 'bubble-other'}`}>
@@ -113,7 +113,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
           <div className="text-xs text-gray-400">Someone is typing...</div>
         )}
       </div>
-      <form onSubmit={sendMessage} className="sm:static fixed bottom-12 inset-x-0 sm:inset-auto p-2 sm:p-3 border-t border-gray-800 bg-black/60 backdrop-blur">
+      <form onSubmit={sendMessage} className="sm:static fixed z-40 bottom-28 inset-x-0 sm:inset-auto p-3 sm:p-3 border-t border-gray-800 bg-black/60 backdrop-blur">
         <div className="mx-auto max-w-3xl flex gap-2">
           <input
             value={input}

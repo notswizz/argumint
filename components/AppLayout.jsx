@@ -35,12 +35,12 @@ export default function AppLayout({ children }) {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6 pb-20 sm:pb-6">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-6 pb-28 sm:pb-6">{children}</main>
       <nav className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-gray-900/70 bg-black/60 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 py-2 grid grid-cols-4 text-xs text-gray-300">
-          <Link href="/prompt" className="text-center py-2 hover:text-white">Prompt</Link>
-          <Link href="/chat" className="text-center py-2 hover:text-white">Chat</Link>
-          <Link href="/profile" className="text-center py-2 hover:text-white">Profile</Link>
+        <div className="mx-auto max-w-6xl px-4 py-3 grid grid-cols-4 text-base text-gray-300">
+          <Link href="/prompt" className="text-center py-3 hover:text-white">Prompt</Link>
+          <Link href="/chat" className="text-center py-3 hover:text-white">Chat</Link>
+          <Link href="/profile" className="text-center py-3 hover:text-white">Profile</Link>
           <Link href="/admin" className="text-center py-2 hover:text-white">Admin</Link>
         </div>
       </nav>
