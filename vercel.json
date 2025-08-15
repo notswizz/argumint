@@ -1,0 +1,9 @@
+{
+    "crons": [
+      {
+        "path": "/api/cron/sweep",
+        "schedule": "*/1 * * * *",
+        "timezone": "Etc/UTC"
+      }
+    ]
+  }
