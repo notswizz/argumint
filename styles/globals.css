@@ -1,13 +1,13 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #05060a;
+  --foreground: #e6e8ef;
+  /* Minty Carolina blue */
+  --gold: #7cc8ff; /* primary trim */
+  --gold-soft: rgba(124, 200, 255, 0.25);
 }
 
 html,
@@ -18,10 +18,16 @@ body {
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background: radial-gradient(1200px 800px at 10% -20%, rgba(59,130,246,0.06), transparent 50%),
+    radial-gradient(1000px 900px at 110% 10%, rgba(56,189,248,0.06), transparent 50%),
+    linear-gradient(180deg, rgba(10,12,20,1) 0%, rgba(5,6,10,1) 60%);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: 'Inter Tight', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+code, pre, kbd, samp {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 * {
@@ -35,8 +41,97 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+/***** Subtle card and border styling *****/
+.shadow-soft {
+  box-shadow: 0 1px 0 0 rgba(255,255,255,0.03), 0 0 0 1px rgba(255,255,255,0.04) inset;
+}
+
+.border-gradient {
+  border: 1px solid transparent;
+  background-image: linear-gradient(var(--background), var(--background)),
+    linear-gradient(90deg, rgba(59,130,246,0.35), rgba(56,189,248,0.35));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* Minty blue accents */
+.border-gold {
+  border: 1px solid transparent;
+  background-image: linear-gradient(var(--background), var(--background)),
+    linear-gradient(90deg, rgba(124,200,255,0.45), rgba(56,189,248,0.35));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+.focus-gold:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(124,200,255,0.35), 0 0 0 4px rgba(124,200,255,0.12);
+}
+
+.underline-gold {
+  position: relative;
+}
+.underline-gold::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: linear-gradient(90deg, #e0f2ff, #7cc8ff, #3ba9ef);
+  opacity: 0.7;
+  border-radius: 2px;
+}
+
+.left-gold {
+  border-left: 2px solid var(--gold);
+}
+
+/* Brand wordmark */
+.brand-mark {
+  font-family: 'Space Grotesk', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: -0.01em;
+  position: relative;
+  display: inline-block;
+}
+
+.brand-mark::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 8px;
+  background: radial-gradient(600px 200px at 10% 20%, var(--gold-soft), transparent 60%);
+  filter: blur(6px);
+  z-index: -1;
+}
+
+.brand-gold {
+  background: linear-gradient(180deg, #e0f2ff 0%, #7cc8ff 45%, #3ba9ef 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Mint buttons & bubbles */
+.btn-mint {
+  background-color: var(--gold);
+  color: #0b1220;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.btn-mint:hover {
+  background-color: #69b8f2;
+}
+.btn-mint:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bubble-mine {
+  background-color: var(--gold);
+  color: #0b1220;
+}
+.bubble-other {
+  background-color: #0f1724;
+  color: #e6e8ef;
+  border: 1px solid rgba(124,200,255,0.2);
 }
