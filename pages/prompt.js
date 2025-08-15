@@ -36,7 +36,7 @@ export default function PromptPage() {
       timers.push(id);
     }
     return () => timers.forEach(clearInterval);
-  }, [prompts.map((p) => p._id).join(',')]);
+  }, [prompts]);
 
   if (!user) return <div className="p-4">Please log in.</div>;
 
@@ -126,7 +126,7 @@ export default function PromptPage() {
                   )}
                 </div>
                 {myResponse ? (
-                  <div className="text-sm text-gray-300">You already responded: "{myResponse.text}"</div>
+                  <div className="text-sm text-gray-300">You already responded: &quot;{myResponse.text}&quot;</div>
                 ) : (
                   <form onSubmit={(e) => submitResponse(e, p._id)} className="space-y-2">
                     <textarea

@@ -17,7 +17,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (roomsData?.rooms?.length && !activeRoom) setActiveRoom(roomsData.rooms[0]);
-  }, [roomsData]);
+  }, [roomsData, activeRoom]);
 
   const filteredRooms = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -83,7 +83,7 @@ export default function ChatPage() {
 
         {triad && (
           <div className="rounded-lg border border-gray-800 bg-gray-900/40 p-2 sm:p-3">
-            <div className="text-xs text-gray-400 mb-2">Participants' responses</div>
+            <div className="text-xs text-gray-400 mb-2">Participants&apos; responses</div>
             <ul className="space-y-2">
               {introData?.items?.map((it) => (
                 <li key={it.userId} className="text-sm">
