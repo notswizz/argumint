@@ -11,6 +11,7 @@ export default function DebatePage() {
   const [activeRoom, setActiveRoom] = useState(null);
   const [query, setQuery] = useState('');
   const [showRooms, setShowRooms] = useState(false);
+  const [roomsOpen, setRoomsOpen] = useState(true);
   const { data: triadData } = useSWR(activeRoom ? `/api/triads/by-room?roomId=${activeRoom._id}` : null, fetcher);
   const triad = triadData?.triad;
   const activeTriad = triad && triad.status === 'active' ? triad : null;
@@ -45,6 +46,7 @@ export default function DebatePage() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 h-[calc(100vh-120px)] sm:h-[85vh]">
+      {roomsOpen && (
       <aside className="border-r border-slate-200 p-3 space-y-3 sm:block hidden overflow-y-auto">
         <input
           value={query}
@@ -76,18 +78,25 @@ export default function DebatePage() {
           {filteredRooms.length === 0 && <div className="text-xs text-slate-500">No matches</div>}
         </div>
       </aside>
-      <main className="sm:col-span-2 p-2 sm:p-3 space-y-3 relative flex flex-col min-h-0">
-        <div className="sm:hidden flex items-center justify-between">
+      )}
+      <main className={`${roomsOpen ? 'sm:col-span-2' : 'sm:col-span-3'} p-2 sm:p-2 space-y-2 relative flex flex-col min-h-0`}>
+        <div className="sm:hidden flex items-center justify-between mb-1">
           <button onClick={() => setShowRooms(true)} className="rounded-md bg-slate-200 border border-slate-300 px-3 py-2 text-xs text-slate-800">Debates</button>
+          {activeRoom && <div className="text-xs text-slate-500 truncate max-w-[60%]">{activeRoom.name || 'Debate Room'}</div>}
+        </div>
+        <div className="hidden sm:flex items-center justify-between mb-1">
+          <button onClick={() => setRoomsOpen((v) => !v)} className="rounded-md bg-slate-200 border border-slate-300 px-3 py-1.5 text-[11px] text-slate-800">
+            {roomsOpen ? 'Hide Past Debates' : 'Show Past Debates'}
+          </button>
           {activeRoom && <div className="text-xs text-slate-500 truncate max-w-[60%]">{activeRoom.name || 'Debate Room'}</div>}
         </div>
 
         {triad && (
-          <div className="rounded-lg border border-slate-200 bg-white p-2 sm:p-3">
-            <div className="text-xs text-slate-500 mb-2">Participants&apos; responses</div>
-            <ul className="space-y-2">
+          <div className="rounded-md border border-slate-200 bg-white p-2">
+            <div className="text-[11px] text-slate-500 mb-1">Participants&apos; responses</div>
+            <ul className="space-y-1">
               {introData?.items?.map((it) => (
-                <li key={it.userId} className="text-sm">
+                <li key={it.userId} className="text-xs">
                   <span className="text-slate-500 mr-2">{it.username}:</span>
                   <span className="text-slate-700">{it.text}</span>
                 </li>

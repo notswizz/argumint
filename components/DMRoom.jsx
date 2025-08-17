@@ -156,7 +156,7 @@ export default function DMRoom({ roomId, user }) {
           const el = e.currentTarget;
           if (el.scrollTop <= 0) loadOlder();
         }}
-        className="flex-1 overflow-y-auto space-y-2 p-3 pb-44 sm:pb-3"
+        className="flex-1 overflow-y-auto space-y-1.5 p-2 pb-40 sm:pb-2"
       >
         {messages.map((m) => {
           const mine = String(m.senderId) === String(user._id);
@@ -164,7 +164,7 @@ export default function DMRoom({ roomId, user }) {
             <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
               <div className={`flex items-end gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
                 <Avatar senderId={m.senderId} />
-                <div className={`w-fit max-w-[85%] sm:max-w-[75%] break-words rounded-2xl px-4 py-3 text-base sm:text-sm leading-snug shadow ${mine ? 'bubble-mine' : 'bubble-other'}`}>
+                <div className={`w-fit max-w-[85%] sm:max-w-[75%] break-words rounded-2xl px-3.5 py-2.5 text-[15px] sm:text-[13px] leading-snug shadow ${mine ? 'bubble-mine' : 'bubble-other'}`}>
                   {m.content}
                 </div>
               </div>
@@ -175,16 +175,16 @@ export default function DMRoom({ roomId, user }) {
           <div className="text-xs text-slate-500">Someone is typing...</div>
         )}
       </div>
-      <form onSubmit={sendMessage} className="sm:static fixed z-40 bottom-16 inset-x-0 sm:inset-auto p-3 sm:p-3 border-t border-slate-200 bg-white/90 backdrop-blur" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
+      <form onSubmit={sendMessage} className="sm:static fixed z-40 bottom-16 inset-x-0 sm:inset-auto p-2 sm:p-2 border-t border-slate-200 bg-white/90 backdrop-blur" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
         <div className="mx-auto max-w-3xl flex gap-2">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onInput={onTyping}
             placeholder={'Type a message'}
-            className="flex-1 rounded-full bg-white border border-slate-300 px-4 py-3 text-base text-slate-800"
+            className="flex-1 rounded-full bg-white border border-slate-300 px-3.5 py-2.5 text-[15px] text-slate-800"
           />
-          <button className="rounded-full px-5 py-3 text-base font-medium btn-mint">Send</button>
+          <button className="rounded-full px-4 py-2.5 text-[15px] font-medium btn-mint">Send</button>
         </div>
       </form>
     </div>
