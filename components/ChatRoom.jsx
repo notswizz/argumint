@@ -62,7 +62,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
     let mounted = true;
     async function loadHistory() {
       try {
-        const res = await fetch(`/api/chat/messages?roomId=${roomId}`, { credentials: 'same-origin' });
+        const res = await fetch(`/api/chat/messages?roomId=${roomId}`, { credentials: 'include' });
         if (!res.ok) {
           console.error('Failed to load messages', res.status);
           return;
@@ -84,7 +84,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
 
     async function loadParticipants() {
       try {
-        const res = await fetch(`/api/chat/participants?roomId=${roomId}`, { credentials: 'same-origin' });
+        const res = await fetch(`/api/chat/participants?roomId=${roomId}`, { credentials: 'include' });
         if (!res.ok) return;
         const data = await res.json();
         const map = {};
@@ -150,7 +150,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
     async function poll() {
       try {
         const since = latestRef.current ? `&since=${encodeURIComponent(latestRef.current)}` : '';
-        const res = await fetch(`/api/chat/messages?roomId=${roomId}${since}`, { credentials: 'same-origin' });
+        const res = await fetch(`/api/chat/messages?roomId=${roomId}${since}`, { credentials: 'include' });
         if (!res.ok) return;
         const data = await res.json();
         const incoming = Array.isArray(data.messages) ? data.messages : [];
@@ -172,7 +172,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
   async function loadOlder() {
     if (!earliestRef.current) return;
     try {
-      const res = await fetch(`/api/chat/messages?roomId=${roomId}&before=${encodeURIComponent(earliestRef.current)}&limit=100`, { credentials: 'same-origin' });
+      const res = await fetch(`/api/chat/messages?roomId=${roomId}&before=${encodeURIComponent(earliestRef.current)}&limit=100`, { credentials: 'include' });
       if (!res.ok) return;
       const data = await res.json();
       const normalized = (data.messages || []).map((m) => normalizeMessage(m));
@@ -202,7 +202,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
       const res = await fetch('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+        credentials: 'include',
         body: JSON.stringify({ roomId, content, isDebate: Boolean(triadId), triadId, promptId }),
       });
       if (res.ok) {
