@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
-import ChatRoom from '@/components/ChatRoom';
+import DMRoom from '@/components/DMRoom';
 
 const fetcher = (url) => fetch(url).then((r) => r.json());
 
@@ -94,7 +94,7 @@ export default function DMPage() {
       <main className="sm:col-span-2 p-2 sm:p-3 space-y-3 relative flex flex-col min-h-0">
         <div className="flex-1 min-h-0">
           {activeRoom ? (
-            <ChatRoom roomId={activeRoom._id} user={user} />
+            <DMRoom roomId={activeRoom._id} user={user} />
           ) : (
             <div className="p-4 text-slate-500">Start or select a DM</div>
           )}
