@@ -2,11 +2,11 @@
   "miniapp": {
     "version": "1",
     "name": "ArguMint",
-    "iconUrl": "https://argumint.app/icon.jpeg",
-    "homeUrl": "https://argumint7.vercel.app//",
-    "imageUrl": "https://argumint.app/opengraph-image",
+    "iconUrl": "https://argumint7.vercel.app/icon.jpeg",
+    "homeUrl": "https://argumint7.vercel.app/",
+    "imageUrl": "https://argumint7.vercel.app/opengraph-image",
     "buttonTitle": "Open",
-    "splashImageUrl": "https://argumint.app/icon.jpeg",
+    "splashImageUrl": "https://argumint7.vercel.app/icon.jpeg",
     "splashBackgroundColor": "#ffffff"
   }
 }

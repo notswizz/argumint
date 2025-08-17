@@ -17,7 +17,7 @@ class MyDocument extends Document {
           <link rel="apple-touch-icon" href="/icon.jpeg" />
           <meta
             name="fc:frame"
-            content='{"version":"next","imageUrl":"https://argumint.app/opengraph-image","button":{"title":"Open","action":{"type":"launch_miniapp","name":"ArguMint","url":"https://argumint.app","splashImageUrl":"https://argumint.app/icon.jpeg","splashBackgroundColor":"#ffffff"}}}'
+            content='{"version":"next","imageUrl":"https://argumint7.vercel.app/opengraph-image","button":{"title":"Open","action":{"type":"launch_miniapp","name":"ArguMint","url":"https://argumint7.vercel.app","splashImageUrl":"https://argumint7.vercel.app/icon.jpeg","splashBackgroundColor":"#ffffff"}}}'
           />
         </Head>
         <body>
