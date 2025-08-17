@@ -17,6 +17,9 @@ const TriadSchema = new Schema(
     // New: bot participant tracking
     botUserId: { type: Schema.Types.ObjectId, ref: 'User' },
     botPersonaKey: { type: String },
+    // Bot throttling/locks
+    botReplyingAt: { type: Date },
+    botLastReplyAt: { type: Date },
     userScores: {
       type: [
         new Schema(
