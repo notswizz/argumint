@@ -7,7 +7,7 @@ export default function Home() {
     <>
       <Head>
         <title>ArguMint</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
       <main className="px-4 py-10 sm:py-16 max-w-5xl mx-auto">
         <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-6 sm:p-10 shadow-soft mb-10">

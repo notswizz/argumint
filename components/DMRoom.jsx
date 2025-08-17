@@ -156,7 +156,7 @@ export default function DMRoom({ roomId, user }) {
           const el = e.currentTarget;
           if (el.scrollTop <= 0) loadOlder();
         }}
-        className="flex-1 overflow-y-auto space-y-2 p-3 pb-40 sm:pb-3"
+        className="flex-1 overflow-y-auto space-y-2 p-3 pb-44 sm:pb-3"
       >
         {messages.map((m) => {
           const mine = String(m.senderId) === String(user._id);
@@ -175,7 +175,7 @@ export default function DMRoom({ roomId, user }) {
           <div className="text-xs text-slate-500">Someone is typing...</div>
         )}
       </div>
-      <form onSubmit={sendMessage} className="sm:static fixed z-40 bottom-28 inset-x-0 sm:inset-auto p-3 sm:p-3 border-t border-slate-200 bg-white/80 backdrop-blur">
+      <form onSubmit={sendMessage} className="sm:static fixed z-40 bottom-16 inset-x-0 sm:inset-auto p-3 sm:p-3 border-t border-slate-200 bg-white/90 backdrop-blur" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
         <div className="mx-auto max-w-3xl flex gap-2">
           <input
             value={input}

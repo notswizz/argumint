@@ -159,4 +159,9 @@ a {
     flex: 1;
     overflow: hidden;
   }
+  .app-main-scroll {
+    /* Only home page scrolls */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }

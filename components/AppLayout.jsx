@@ -1,12 +1,15 @@
 import Link from 'next/link';
 import useSWR from 'swr';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 
 const fetcher = (url) => fetch(url).then((r) => r.json());
 
 export default function AppLayout({ children }) {
   const { data: me } = useSWR('/api/auth/me', fetcher);
   const user = me?.user;
+  const router = useRouter();
+  const isHome = router.pathname === '/';
 
   return (
     <div className="min-h-screen text-slate-800 app-root">
@@ -35,8 +38,8 @@ export default function AppLayout({ children }) {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6 pb-28 sm:pb-6 app-main">{children}</main>
-      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200/80 bg-white/85 backdrop-blur">
+      <main className={`mx-auto max-w-6xl px-4 py-6 pb-28 sm:pb-6 app-main ${isHome ? 'app-main-scroll' : ''}`}>{children}</main>
+      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200/80 bg-white/85 backdrop-blur" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
         <div className="mx-auto max-w-6xl px-4 py-3 grid grid-cols-4 text-base text-slate-600">
           <Link href="/prompt" className="text-center py-3 hover:text-slate-900">Prompt</Link>
           <Link href="/debate" className="text-center py-3 hover:text-slate-900">Debate</Link>
