@@ -77,25 +77,20 @@ export default async function handler(req, res) {
         const chat = await client.chat.completions.create({
           model: process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: persona.system },
-            { role: 'user', content: `Prompt: ${prompt.text}\nRespond directly with your take.` },
+            { role: 'system', content: `${persona.system}\nYour task for this message: Reply ONLY with a short stance (max 8 words). No reasons, no setup, no emojis, no hashtags.` },
+            { role: 'user', content: `Prompt: ${prompt.text}\nRespond with stance only.` },
           ],
-          temperature: 0.8,
+          temperature: 0.7,
         });
         text = (chat.choices?.[0]?.message?.content || '').trim() || '';
       } catch {}
     }
     if (!text) {
       const p = String(prompt.text || '').trim();
-      if (botKey === 'witty') {
-        text = `Hot take: ${p} I’m hitching my wagon to the spiciest angle—change my mind.`;
-      } else if (botKey === 'professor') {
-        text = `On ${p}, I’d weigh tradeoffs and first principles: define the goal, list constraints, then compare options. One choice stands out for practical reasons.`;
-      } else if (botKey === 'trash') {
-        text = `Easy call: ${p}? I’m taking the bold side and I’ll die on this hill—friendly smoke welcome.`;
-      } else {
-        text = `Here’s my angle: ${p}`;
-      }
+      if (botKey === 'witty') text = 'Going bold.';
+      else if (botKey === 'professor') text = 'Leaning pragmatic.';
+      else if (botKey === 'trash') text = 'Taking the hot side.';
+      else text = 'My stance is set.';
     }
 
     const response = await PromptResponse.create({ promptId, userId: bot._id, text });
