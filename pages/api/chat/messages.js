@@ -2,6 +2,7 @@ import { connectToDatabase } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
 import { Message, ChatRoom } from '@/models/Chat';
 import { Triad } from '@/models/Triad';
+import { triggerBotReplies } from '@/lib/bots';
 
 export default async function handler(req, res) {
   const user = await getUserFromRequest(req);
@@ -62,6 +63,12 @@ export default async function handler(req, res) {
       if (triadId) {
         await Triad.findByIdAndUpdate(triadId, { $push: { transcript: message._id } });
       }
+      try {
+        if (triadId && promptId) {
+          // Fire-and-forget bot triggers; do not block user response
+          triggerBotReplies({ roomId, triadId, promptId, excludeUserId: user._id });
+        }
+      } catch {}
       return res.status(201).json({ message });
     } catch (e) {
       return res.status(500).json({ error: 'Failed to save message' });
