@@ -1,12 +1,12 @@
 import { connectToDatabase } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
 import { Triad } from '@/models/Triad';
-import { Message } from '@/models/Chat';
+import { Message, ChatRoom } from '@/models/Chat';
 import { TokenTransaction } from '@/models/Token';
 import User from '@/models/User';
 import { Prompt } from '@/models/Debate';
 import OpenAI from 'openai';
-import { parseJsonArraySafe } from '@/lib/openai';
+import { parseJsonArraySafe, scoreDebateWithRubric } from '@/lib/openai';
 
 const WIN_TOKENS = 30;
 const PARTICIPATION_TOKENS = 10;
@@ -28,36 +28,51 @@ export default async function handler(req, res) {
     const transcript = msgs.map((m) => m.content).join('\n');
     let triadScore = 0;
     let userScores = [];
+    let groupFeedback = '';
 
     if (client && transcript) {
-      // Per-user scoring
+      // Rubric-based per-user scoring
       try {
-        const perUser = await client.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: 'Given a debate transcript with multiple participants, assign each participant a score from 0-100 based on rigor, clarity, and evidence. Respond ONLY as JSON array of {userIndex: number, score: number} where userIndex matches the order of participants array.' },
-            { role: 'user', content: `Prompt: ${prompt.text}\nParticipants (in order): ${t.participants.map((_, i) => `#${i}`).join(', ')}\nTranscript:\n${transcript}` },
-          ],
-          temperature: 0,
+        const result = await scoreDebateWithRubric({
+          promptText: prompt.text,
+          participantsCount: (t.participants || []).length,
+          transcript,
         });
-        const arr = parseJsonArraySafe(perUser.choices?.[0]?.message?.content || '[]') || [];
-        userScores = arr
-          .filter((r) => typeof r.userIndex === 'number' && typeof r.score === 'number')
-          .map((r) => ({ userId: t.participants[r.userIndex], score: Math.max(0, Math.min(100, Math.round(r.score))) }));
+        if (result && Array.isArray(result.per_user) && result.per_user.length) {
+          userScores = result.per_user
+            .filter((r) => typeof r.userIndex === 'number')
+            .map((r) => ({
+              userId: t.participants[r.userIndex],
+              score: Math.max(0, Math.min(100, Math.round(r.overall || 0))),
+              rubric: {
+                defense: Math.max(0, Math.min(100, Math.round(r.defense || 0))),
+                evidence: Math.max(0, Math.min(100, Math.round(r.evidence || 0))),
+                logic: Math.max(0, Math.min(100, Math.round(r.logic || 0))),
+                responsiveness: Math.max(0, Math.min(100, Math.round(r.responsiveness || 0))),
+                clarity: Math.max(0, Math.min(100, Math.round(r.clarity || 0))),
+              },
+              feedback: (r.feedback || '').slice(0, 600),
+            }));
+          groupFeedback = (result.group_feedback || '').slice(0, 600);
+        }
       } catch {}
 
       // Overall triad score
       try {
-        const resp = await client.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: 'Score the debate from 0-100 for intellectual rigor, clarity, and evidence. Respond ONLY with a number.' },
-            { role: 'user', content: `Prompt: ${prompt.text}\nDebate Transcript:\n${transcript}` },
-          ],
-          temperature: 0,
-        });
-        const content = resp.choices?.[0]?.message?.content?.trim() || '0';
-        triadScore = parseInt(content.replace(/[^0-9]/g, ''), 10) || 0;
+        if (Array.isArray(userScores) && userScores.length) {
+          triadScore = Math.round(userScores.reduce((s, u) => s + (u.score || 0), 0) / userScores.length);
+        } else {
+          const resp = await client.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: 'Score the debate from 0-100 for intellectual rigor, clarity, and evidence. Respond ONLY with a number.' },
+              { role: 'user', content: `Prompt: ${prompt.text}\nDebate Transcript:\n${transcript}` },
+            ],
+            temperature: 0,
+          });
+          const content = resp.choices?.[0]?.message?.content?.trim() || '0';
+          triadScore = parseInt(content.replace(/[^0-9]/g, ''), 10) || 0;
+        }
       } catch {}
     }
 
@@ -66,7 +81,7 @@ export default async function handler(req, res) {
       userScores = (t.participants || []).map((uid) => ({ userId: uid, score: 50 }));
     }
 
-    await Triad.updateOne({ _id: t._id }, { userScores });
+    await Triad.updateOne({ _id: t._id }, { userScores, groupFeedback });
 
     t.userScores = userScores;
     t.score = triadScore;
@@ -81,6 +96,31 @@ export default async function handler(req, res) {
       await User.findByIdAndUpdate(uid, { $inc: { tokens: WIN_TOKENS } });
       await TokenTransaction.create({ userId: uid, amount: WIN_TOKENS, type: 'earn_win', metadata: { triadId: best._id, promptId } });
     }
+    // Post rubric summary to winning room if not already posted
+    try {
+      const triadFresh = await Triad.findById(best._id).lean();
+      if (!triadFresh.rubricPostedAt) {
+        const users = await User.find({ _id: { $in: triadFresh.participants } }).lean();
+        const idToName = new Map(users.map((u) => [u._id.toString(), u.username || u.email || 'user']));
+        const scores = Array.isArray(triadFresh.userScores) ? [...triadFresh.userScores] : [];
+        scores.sort((a, b) => (b.score || 0) - (a.score || 0));
+        const lines = [];
+        lines.push('AI Rubric Results');
+        lines.push(`Group Score: ${Math.round(triadFresh.score || 0)} — Winner`);
+        if (triadFresh.groupFeedback) lines.push(`Group Feedback: ${triadFresh.groupFeedback}`);
+        lines.push('Rankings:');
+        scores.forEach((s, idx) => {
+          const name = idToName.get((s.userId || '').toString()) || `#${idx + 1}`;
+          const r = s.rubric || {};
+          lines.push(`${idx + 1}. ${name} — overall ${Math.round(s.score || 0)} (defense ${Math.round(r.defense || 0)}, evidence ${Math.round(r.evidence || 0)}, logic ${Math.round(r.logic || 0)}, responsiveness ${Math.round(r.responsiveness || 0)}, clarity ${Math.round(r.clarity || 0)})`);
+          if (s.feedback) lines.push(`   Feedback: ${s.feedback}`);
+        });
+        const content = lines.join('\n');
+        await Message.create({ roomId: triadFresh.roomId, senderId: null, content, isDebate: false, triadId: triadFresh._id, promptId: triadFresh.promptId });
+        await ChatRoom.findByIdAndUpdate(triadFresh.roomId, { lastMessageAt: new Date() });
+        await Triad.updateOne({ _id: triadFresh._id }, { rubricPostedAt: new Date() });
+      }
+    } catch {}
   }
   // Others get participation
   for (const t of triads) {
@@ -90,6 +130,31 @@ export default async function handler(req, res) {
       await User.findByIdAndUpdate(uid, { $inc: { tokens: PARTICIPATION_TOKENS } });
       await TokenTransaction.create({ userId: uid, amount: PARTICIPATION_TOKENS, type: 'earn_participation', metadata: { triadId: t._id, promptId } });
     }
+    // Post rubric summary to non-winning rooms as well
+    try {
+      const triadFresh = await Triad.findById(t._id).lean();
+      if (!triadFresh.rubricPostedAt) {
+        const users = await User.find({ _id: { $in: triadFresh.participants } }).lean();
+        const idToName = new Map(users.map((u) => [u._id.toString(), u.username || u.email || 'user']));
+        const scores = Array.isArray(triadFresh.userScores) ? [...triadFresh.userScores] : [];
+        scores.sort((a, b) => (b.score || 0) - (a.score || 0));
+        const lines = [];
+        lines.push('AI Rubric Results');
+        lines.push(`Group Score: ${Math.round(triadFresh.score || 0)}`);
+        if (triadFresh.groupFeedback) lines.push(`Group Feedback: ${triadFresh.groupFeedback}`);
+        lines.push('Rankings:');
+        scores.forEach((s, idx) => {
+          const name = idToName.get((s.userId || '').toString()) || `#${idx + 1}`;
+          const r = s.rubric || {};
+          lines.push(`${idx + 1}. ${name} — overall ${Math.round(s.score || 0)} (defense ${Math.round(r.defense || 0)}, evidence ${Math.round(r.evidence || 0)}, logic ${Math.round(r.logic || 0)}, responsiveness ${Math.round(r.responsiveness || 0)}, clarity ${Math.round(r.clarity || 0)})`);
+          if (s.feedback) lines.push(`   Feedback: ${s.feedback}`);
+        });
+        const content = lines.join('\n');
+        await Message.create({ roomId: triadFresh.roomId, senderId: null, content, isDebate: false, triadId: triadFresh._id, promptId: triadFresh.promptId });
+        await ChatRoom.findByIdAndUpdate(triadFresh.roomId, { lastMessageAt: new Date() });
+        await Triad.updateOne({ _id: triadFresh._id }, { rubricPostedAt: new Date() });
+      }
+    } catch {}
   }
 
   return res.status(200).json({ winnerTriadId: best?._id || null, score: best?.score || 0 });

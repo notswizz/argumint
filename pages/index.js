@@ -17,7 +17,7 @@ export default function Home() {
               <span className="brand-mark brand-gold">ArguMint</span>
             </h1>
             <p className="text-sm sm:text-base text-slate-600 mt-3 max-w-2xl mx-auto">
-              Post your take, debate live, earn Solana tokens.
+              --- post takes, debate live, earn tokens ---
             </p>
             <div className="mt-6 flex items-center justify-center gap-3">
               <Link href="/debate" className="rounded-full btn-mint px-4 py-2 text-sm sm:text-base font-medium">--- ArguMint --- </Link>
