@@ -75,12 +75,14 @@ export default async function handler(req, res) {
       try {
         const persona = PERSONAS[botKey];
         const chat = await client.chat.completions.create({
-          model: process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini',
+          model: 'gpt-5-mini',
           messages: [
             { role: 'system', content: `${persona.system}\nYour task for this message: Reply ONLY with a short stance (max 8 words). No reasons, no setup, no emojis, no hashtags.` },
             { role: 'user', content: `Prompt: ${prompt.text}\nRespond with stance only.` },
           ],
-          temperature: 0.7,
+          response_format: { type: 'text' },
+          verbosity: 'medium',
+          reasoning_effort: 'medium',
         });
         text = (chat.choices?.[0]?.message?.content || '').trim() || '';
       } catch {}

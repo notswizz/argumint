@@ -10,7 +10,8 @@ export default async function handler(req, res) {
   try {
     const sys = (await System.findOne({ key: 'cron' })) || (await System.create({ key: 'cron', lastSweepAt: new Date(0) }));
     const now = new Date();
-    if (!sys.lastSweepAt || now.getTime() - new Date(sys.lastSweepAt).getTime() > 60 * 1000) {
+    // Reduce sweep interval to minimize lag between prompt expiry and room start
+    if (!sys.lastSweepAt || now.getTime() - new Date(sys.lastSweepAt).getTime() > 5 * 1000) {
       await scheduleDuePrompts();
       await ensureFiveActivePrompts();
       await evaluateExpiredTriads();
