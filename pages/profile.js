@@ -24,32 +24,28 @@ export default function ProfilePage() {
       </div>
 
       {/* Performance Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="rounded-xl border border-slate-200 p-4 bg-white">
-          <div className="text-xs uppercase tracking-wide text-slate-500 mb-2">Overall</div>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div><div className="text-slate-500">Debates</div><div className="text-lg font-semibold">{perf?.summary?.debatesParticipated ?? 0}</div></div>
-            <div><div className="text-slate-500">Group wins</div><div className="text-lg font-semibold">{perf?.summary?.groupWins ?? 0}</div></div>
-            <div><div className="text-slate-500">My avg</div><div className="text-lg font-semibold">{perf?.summary?.indAvg ?? 0}</div></div>
-            <div><div className="text-slate-500">Group avg</div><div className="text-lg font-semibold">{perf?.summary?.groupAvg ?? 0}</div></div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs uppercase tracking-wide text-slate-500">Performance</div>
+            <div className="text-xs text-slate-400">overall + peaks</div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2 text-sm">
+              <div><div className="text-slate-500">Debates</div><div className="text-lg font-semibold">{perf?.summary?.debatesParticipated ?? 0}</div></div>
+              <div><div className="text-slate-500">Group wins</div><div className="text-lg font-semibold">{perf?.summary?.groupWins ?? 0}</div></div>
+              <div><div className="text-slate-500">My avg</div><div className="text-lg font-semibold">{perf?.summary?.indAvg ?? 0}</div></div>
+              <div><div className="text-slate-500">Group avg</div><div className="text-lg font-semibold">{perf?.summary?.groupAvg ?? 0}</div></div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div><div className="text-slate-500">My best</div><div className="text-lg font-semibold">{perf?.summary?.indBest ?? 0}</div></div>
+              <div><div className="text-slate-500">Group best</div><div className="text-lg font-semibold">{perf?.summary?.groupBest ?? 0}</div></div>
+            </div>
           </div>
         </div>
         <div className="rounded-xl border border-slate-200 p-4 bg-white">
-          <div className="text-xs uppercase tracking-wide text-slate-500 mb-2">Best / Worst</div>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div><div className="text-slate-500">My best</div><div className="text-lg font-semibold">{perf?.summary?.indBest ?? 0}</div></div>
-            <div><div className="text-slate-500">My worst</div><div className="text-lg font-semibold">{perf?.summary?.indWorst ?? 0}</div></div>
-            <div><div className="text-slate-500">Group best</div><div className="text-lg font-semibold">{perf?.summary?.groupBest ?? 0}</div></div>
-            <div><div className="text-slate-500">Group worst</div><div className="text-lg font-semibold">{perf?.summary?.groupWorst ?? 0}</div></div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-slate-200 p-4 bg-white">
-          <div className="text-xs uppercase tracking-wide text-slate-500 mb-2">Placements</div>
-          <div className="flex items-center gap-3">
-            <span className="rounded-md bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[11px]">#1 {perf?.summary?.placeDist?.first ?? 0}</span>
-            <span className="rounded-md bg-sky-100 text-sky-700 px-2 py-0.5 text-[11px]">#2 {perf?.summary?.placeDist?.second ?? 0}</span>
-            <span className="rounded-md bg-slate-100 text-slate-700 px-2 py-0.5 text-[11px]">#3 {perf?.summary?.placeDist?.third ?? 0}</span>
-          </div>
+          <div className="text-xs uppercase tracking-wide text-slate-500 mb-2">Tokens</div>
+          <TokenDisplay tokens={user.tokens} history={tx?.history || []} />
         </div>
       </div>
 
@@ -59,7 +55,7 @@ export default function ProfilePage() {
           <div className="text-xs uppercase tracking-wide text-slate-500">Recent debates</div>
           <div className="text-xs text-slate-500">Most recent first</div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-80 overflow-y-auto rounded-md border border-slate-100">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500">
@@ -67,7 +63,6 @@ export default function ProfilePage() {
                 <th className="py-2 pr-3">Date</th>
                 <th className="py-2 pr-3">Group</th>
                 <th className="py-2 pr-3">My score</th>
-                <th className="py-2 pr-3">My place</th>
                 <th className="py-2 pr-3">Members</th>
               </tr>
             </thead>
@@ -78,19 +73,16 @@ export default function ProfilePage() {
                   <td className="py-2 pr-3 text-slate-600">{r.date ? new Date(r.date).toLocaleString() : '—'}</td>
                   <td className="py-2 pr-3"><span className="rounded-md bg-slate-200 text-slate-800 px-2 py-0.5 text-[11px] font-mono">{r.groupScore ?? 0}</span> {r.isGroupWinner && (<span className="ml-1 rounded-md bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[10px] uppercase tracking-wide">Winner</span>)}</td>
                   <td className="py-2 pr-3 font-mono">{r.myScore ?? 0}</td>
-                  <td className="py-2 pr-3">{r.myPlace ? `#${r.myPlace}` : '—'}</td>
                   <td className="py-2 pr-3 text-slate-600">{r.participants ?? 0}</td>
                 </tr>
               ))}
               {(!perf?.recent || perf.recent.length === 0) && (
-                <tr><td colSpan="6" className="py-6 text-center text-slate-500 text-sm">No debates yet</td></tr>
+                <tr><td colSpan="5" className="py-6 text-center text-slate-500 text-sm">No debates yet</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
-
-      <TokenDisplay tokens={user.tokens} history={tx?.history || []} />
     </div>
   );
 } 
