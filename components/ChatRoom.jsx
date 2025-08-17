@@ -11,6 +11,26 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
   const [remaining, setRemaining] = useState(null);
   const listRef = useRef(null);
   const prevRoomRef = useRef(null);
+  const messageIdsRef = useRef(new Set());
+
+  function normalizeMessage(raw) {
+    if (!raw) return raw;
+    const id = raw._id ? String(raw._id) : undefined;
+    const senderId = raw.senderId ? String(raw.senderId) : undefined;
+    const roomIdStr = raw.roomId ? String(raw.roomId) : undefined;
+    const triadIdStr = raw.triadId ? String(raw.triadId) : null;
+    const promptIdStr = raw.promptId ? String(raw.promptId) : null;
+    return { ...raw, _id: id, senderId, roomId: roomIdStr, triadId: triadIdStr, promptId: promptIdStr };
+  }
+
+  function appendMessageUnique(rawMsg) {
+    const msg = normalizeMessage(rawMsg);
+    const key = msg?._id || `${msg?.senderId || 'unknown'}:${msg?.content || ''}:${msg?.createdAt || ''}`;
+    if (!key) return;
+    if (messageIdsRef.current.has(key)) return;
+    messageIdsRef.current.add(key);
+    setMessages((prev) => [...prev, msg]);
+  }
 
   useEffect(() => {
     // Local countdown for triad
@@ -38,7 +58,12 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
           return;
         }
         const data = await res.json();
-        if (mounted && Array.isArray(data.messages)) setMessages(data.messages);
+        if (mounted && Array.isArray(data.messages)) {
+          const normalized = data.messages.map((m) => normalizeMessage(m));
+          const ids = new Set(normalized.map((m) => m._id || '')); 
+          messageIdsRef.current = ids;
+          setMessages(normalized);
+        }
       } catch (err) {
         console.error('Error loading messages', err);
       }
@@ -71,7 +96,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
 
     socket.emit('join', { roomId });
     socket.on('message', (msg) => {
-      setMessages((prev) => [...prev, msg]);
+      appendMessageUnique(msg);
     });
     socket.on('typing', ({ userId }) => {
       setTypingUserId(userId);
@@ -115,8 +140,8 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
       });
       if (res.ok) {
         const { message } = await res.json();
-        // Optimistically add if server didn’t echo via socket quickly
-        setMessages((prev) => [...prev, message]);
+        // Add once; socket echo will be deduped
+        appendMessageUnique(message);
         // Fire-and-forget socket broadcast for other clients
         socket.emit('message', { roomId, userId: user._id, content, isDebate: Boolean(triadId), triadId, promptId, alreadySaved: true, _id: message?._id });
       } else {
