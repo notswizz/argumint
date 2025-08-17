@@ -9,6 +9,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
   const [input, setInput] = useState('');
   const [locked, setLocked] = useState(false);
   const [remaining, setRemaining] = useState(null);
+  const [participants, setParticipants] = useState({});
   const listRef = useRef(null);
   const prevRoomRef = useRef(null);
   const messageIdsRef = useRef(new Set());
@@ -69,6 +70,22 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
       }
     }
     loadHistory();
+
+    async function loadParticipants() {
+      try {
+        const res = await fetch(`/api/chat/participants?roomId=${roomId}`, { credentials: 'same-origin' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const map = {};
+        for (const u of data.users || []) {
+          map[String(u._id)] = u;
+        }
+        // include self as fallback
+        map[String(user._id)] = map[String(user._id)] || { _id: user._id, username: user.username, profilePictureUrl: user.profilePictureUrl };
+        if (mounted) setParticipants(map);
+      } catch {}
+    }
+    loadParticipants();
 
     const socketBase = (process.env.NEXT_PUBLIC_SOCKET_BASE || '').trim() || undefined;
     const usingExternal = Boolean(socketBase);
@@ -155,6 +172,21 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
   const mins = remaining != null ? Math.floor(remaining / 60) : null;
   const secs = remaining != null ? remaining % 60 : null;
 
+  function Avatar({ senderId }) {
+    const meta = participants[String(senderId)] || {};
+    const url = meta.profilePictureUrl;
+    const name = meta.username || 'User';
+    if (url) {
+      return <img src={url} alt={name} title={name} className="w-6 h-6 rounded-full object-cover border border-slate-200" />;
+    }
+    const initial = (name || '?').slice(0, 1).toUpperCase();
+    return (
+      <div title={name} className="w-6 h-6 rounded-full bg-slate-300 text-slate-700 text-xs flex items-center justify-center border border-slate-200">
+        {initial}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full">
       {triadId && (
@@ -164,13 +196,19 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
         </div>
       )}
       <div ref={listRef} className="flex-1 overflow-y-auto space-y-2 p-3 pb-40 sm:pb-3">
-        {messages.map((m) => (
-          <div key={m._id} className={`flex ${m.senderId === user._id ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm shadow ${m.senderId === user._id ? 'bubble-mine' : 'bubble-other'}`}>
-              {m.content}
+        {messages.map((m) => {
+          const mine = String(m.senderId) === String(user._id);
+          return (
+            <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+              <div className={`flex items-end gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
+                <Avatar senderId={m.senderId} />
+                <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm shadow ${mine ? 'bubble-mine' : 'bubble-other'}`}>
+                  {m.content}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {typingUserId && typingUserId !== user._id && (
           <div className="text-xs text-slate-500">Someone is typing...</div>
         )}
