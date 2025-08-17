@@ -77,12 +77,13 @@ export default async function handler(req, res) {
         const chat = await client.chat.completions.create({
           model: 'gpt-5-mini',
           messages: [
-            { role: 'system', content: `${persona.system}\nYour task for this message: Reply ONLY with a short stance (max 8 words). No reasons, no setup, no emojis, no hashtags.` },
+            { role: 'system', content: `${persona.system}\nThink through options privately, then output ONLY a short stance (max 8 words). No reasons, no setup, no emojis, no hashtags.` },
             { role: 'user', content: `Prompt: ${prompt.text}\nRespond with stance only.` },
           ],
           response_format: { type: 'text' },
-          verbosity: 'medium',
-          reasoning_effort: 'medium',
+          verbosity: 'high',
+          reasoning_effort: 'high',
+          max_tokens: 24,
         });
         text = (chat.choices?.[0]?.message?.content || '').trim() || '';
       } catch {}
