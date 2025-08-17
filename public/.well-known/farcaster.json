@@ -1,0 +1,14 @@
+{
+  "miniapp": {
+    "version": "1",
+    "name": "ArguMint",
+    "iconUrl": "https://argumint.app/icon.jpeg",
+    "homeUrl": "https://argumint.app/",
+    "imageUrl": "https://argumint.app/opengraph-image",
+    "buttonTitle": "Open",
+    "splashImageUrl": "https://argumint.app/icon.jpeg",
+    "splashBackgroundColor": "#ffffff"
+  }
+}
+
+
