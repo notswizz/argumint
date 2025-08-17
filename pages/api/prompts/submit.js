@@ -31,7 +31,8 @@ export default async function handler(req, res) {
   await freshUser.save();
   await TokenTransaction.create({ userId: freshUser._id, amount: -COST_TOKENS, type: 'spend_customization', metadata: { reason: 'submit_prompt' } });
 
-  const scheduledFor = new Date(Date.now() + durationMs);
+  const JITTER = Number(process.env.PROMPTS_SUBMIT_JITTER_MS || 60 * 1000); // default up to 60s random jitter
+  const scheduledFor = new Date(Date.now() + durationMs + Math.floor(Math.random() * JITTER));
   const prompt = await Prompt.create({ text: content, category: 'user', createdBy: freshUser._id, scheduledFor, active: true });
 
   return res.status(201).json({ prompt, balance: freshUser.tokens });

@@ -7,8 +7,13 @@ export const config = {
 };
 
 export default function handler(req, res) {
-  if (!res.socket.server.io) {
-    res.socket.server.io = getOrCreateIO(res.socket.server);
+  try {
+    if (!res.socket.server.io) {
+      res.socket.server.io = getOrCreateIO(res.socket.server);
+    }
+  } catch (e) {
+    // Retry once on init errors
+    try { res.socket.server.io = getOrCreateIO(res.socket.server); } catch {}
   }
   res.end();
-} 
+}
