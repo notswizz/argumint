@@ -18,8 +18,8 @@ export default async function handler(req, res) {
   await connectToDatabase();
   const now = new Date();
 
-  // 1) Ensure 5 active (10-min deadline, then 5-min staggers)
-  const activePrompts = await Prompt.find({ active: true, scheduledFor: { $gt: now } })
+  // 1) Ensure 5 AI active (10-min deadline, then 5-min staggers)
+  const activePrompts = await Prompt.find({ active: true, scheduledFor: { $gt: now }, category: { $ne: 'user' } })
     .sort({ scheduledFor: 1 })
     .lean();
   const deficit = Math.max(0, 5 - activePrompts.length);
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
   // 2) Schedule triads for prompts whose timers ended
   await scheduleDuePrompts();
 
-  // 3) Immediately top back up to 5 with 10-min base and 5-min staggers
+  // 3) Immediately top back up to 5 AI with 10-min base and 5-min staggers
   try {
     await ensureFiveActivePrompts();
   } catch (e) {}

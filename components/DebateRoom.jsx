@@ -37,22 +37,22 @@ export default function DebateRoom({ debate, user }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-xs text-gray-400">Prompt</div>
+          <div className="text-xs text-slate-500">Prompt</div>
           <div className="text-sm font-medium">{debate.prompt?.text}</div>
         </div>
-        <div className="text-sm rounded-md bg-gray-800 px-3 py-1">
+        <div className="text-sm rounded-md bg-slate-200 text-slate-800 px-3 py-1">
           {minutes}:{seconds.toString().padStart(2, '0')}
         </div>
       </div>
 
       {intros.length > 0 && (
-        <div className="rounded-lg border border-gray-800 bg-gray-900/40 p-3">
-          <div className="text-xs text-gray-400 mb-2">Participants&apos; responses</div>
+        <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <div className="text-xs text-slate-500 mb-2">Participants' responses</div>
           <ul className="space-y-2">
             {intros.map((it) => (
               <li key={it.userId} className="text-sm">
-                <span className="text-gray-400 mr-2">{it.username}:</span>
-                <span className="text-gray-200">{it.text}</span>
+                <span className="text-slate-500 mr-2">{it.username}:</span>
+                <span className="text-slate-700">{it.text}</span>
               </li>
             ))}
           </ul>

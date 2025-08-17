@@ -8,9 +8,10 @@ export default async function handler(req, res) {
   if (!user) return res.status(401).end();
   await connectToDatabase();
   const now = new Date();
+  const limit = Math.min(Number(req.query?.limit || 200), 500);
   const prompts = await Prompt.find({ active: true, scheduledFor: { $gt: now } })
     .sort({ scheduledFor: 1, createdAt: -1 })
-    .limit(5)
+    .limit(limit)
     .lean();
   if (!prompts?.length) return res.status(200).json({ responses: [] });
   const ids = prompts.map((p) => p._id);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 
 const fetcher = (url) => fetch(url).then((r) => r.json());
@@ -6,9 +6,11 @@ const fetcher = (url) => fetch(url).then((r) => r.json());
 export default function PromptPage() {
   const { data: me, mutate: mutateMe } = useSWR('/api/auth/me', fetcher);
   const user = me?.user;
-  const { data: pData, mutate: mutatePrompt } = useSWR('/api/prompts/active', fetcher);
-  const { data: mineData, mutate: mutateMine } = useSWR(user ? '/api/prompts/mine' : null, fetcher);
-  const prompts = pData?.prompts || [];
+  const { data: aiData, mutate: mutateAi } = useSWR('/api/prompts/active?ai=1', fetcher);
+  const { data: usersData, mutate: mutateUsers } = useSWR('/api/prompts/active?users=1', fetcher);
+  const { data: mineData, mutate: mutateMine } = useSWR(user ? '/api/prompts/mine?limit=500' : null, fetcher);
+  const aiPrompts = aiData?.prompts || [];
+  const userPrompts = usersData?.prompts || [];
   const responses = new Map((mineData?.responses || []).map((r) => [r.promptId, r.response]));
 
   const [tab, setTab] = useState('active');
@@ -26,7 +28,8 @@ export default function PromptPage() {
 
   useEffect(() => {
     const timers = [];
-    for (const p of prompts) {
+    const all = [...aiPrompts, ...userPrompts];
+    for (const p of all) {
       if (!p?.scheduledFor) continue;
       const end = new Date(p.scheduledFor).getTime();
       const id = setInterval(() => {
@@ -37,15 +40,7 @@ export default function PromptPage() {
       timers.push(id);
     }
     return () => timers.forEach(clearInterval);
-  }, [prompts]);
-
-  const aiPrompts = useMemo(() => {
-    return prompts.filter((p) => !(p.category === 'user' || (user?._id && p.createdBy === user._id)));
-  }, [prompts, user?._id]);
-
-  const userPrompts = useMemo(() => {
-    return prompts.filter((p) => (p.category === 'user' || (user?._id && p.createdBy === user._id)));
-  }, [prompts, user?._id]);
+  }, [aiPrompts, userPrompts]);
 
   if (!user) return <div className="p-4">Please log in.</div>;
 
@@ -67,7 +62,8 @@ export default function PromptPage() {
       setSuccess('Response submitted');
       setTextByPrompt((prev) => ({ ...prev, [promptId]: '' }));
       mutateMine();
-      mutatePrompt();
+      mutateAi();
+      mutateUsers();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -90,7 +86,8 @@ export default function PromptPage() {
       setSuccess('Prompt submitted');
       setNewText('');
       mutateMyPrompts();
-      mutatePrompt();
+      mutateAi();
+      mutateUsers();
       mutateMe();
     } catch (err) {
       setError(err.message);
@@ -116,7 +113,9 @@ export default function PromptPage() {
 
       {tab === 'active' && (
         <div className="space-y-5">
-          {prompts.length === 0 && <div className="text-gray-400">No active prompts right now. Check back later.</div>}
+          {(aiPrompts.length === 0 && userPrompts.length === 0) && (
+            <div className="text-gray-400">No active prompts right now. Check back later.</div>
+          )}
 
           {aiPrompts.length > 0 && (
             <div className="space-y-2">

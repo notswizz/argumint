@@ -33,7 +33,7 @@ export default function SignupPage() {
         <input
           type="email"
           placeholder="Email"
-          className="w-full rounded-md bg-gray-900 border border-gray-800 px-3 py-2"
+          className="w-full rounded-md bg-white border border-slate-300 px-3 py-2 text-slate-800"
           value={form.email}
           onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
           required
@@ -41,7 +41,7 @@ export default function SignupPage() {
         <input
           type="text"
           placeholder="Username"
-          className="w-full rounded-md bg-gray-900 border border-gray-800 px-3 py-2"
+          className="w-full rounded-md bg-white border border-slate-300 px-3 py-2 text-slate-800"
           value={form.username}
           onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
           required
@@ -49,12 +49,12 @@ export default function SignupPage() {
         <input
           type="password"
           placeholder="Password"
-          className="w-full rounded-md bg-gray-900 border border-gray-800 px-3 py-2"
+          className="w-full rounded-md bg-white border border-slate-300 px-3 py-2 text-slate-800"
           value={form.password}
           onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
           required
         />
-        <label className="flex items-start gap-2 text-sm text-gray-300">
+        <label className="flex items-start gap-2 text-sm text-slate-700">
           <input
             type="checkbox"
             checked={form.acceptTerms}
@@ -65,16 +65,16 @@ export default function SignupPage() {
             I agree my conversations may be anonymized and sold for AI training.
           </span>
         </label>
-        {error && <div className="text-red-400 text-sm">{error}</div>}
+        {error && <div className="text-red-600 text-sm">{error}</div>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-brand-600 hover:bg-brand-500 px-3 py-2 font-medium"
+          className="w-full rounded-md bg-brand-600 hover:bg-brand-500 px-3 py-2 font-medium text-white"
         >
           {loading ? 'Creating account...' : 'Sign up'}
         </button>
       </form>
-      <p className="text-sm text-gray-400 mt-4">
+      <p className="text-sm text-slate-600 mt-4">
         Already have an account? <Link className="underline" href="/login">Log in</Link>
       </p>
     </div>

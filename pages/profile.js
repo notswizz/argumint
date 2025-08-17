@@ -12,12 +12,12 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-4">
-      <div className="rounded-xl border border-gray-800 p-4 bg-gray-900/40">
+      <div className="rounded-xl border border-slate-200 p-4 bg-white">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-full bg-gray-800" />
+          <div className="h-12 w-12 rounded-full bg-slate-200" />
           <div>
             <div className="text-lg font-semibold">{user.username}</div>
-            <div className="text-xs text-gray-400">{user.email}</div>
+            <div className="text-xs text-slate-600">{user.email}</div>
           </div>
         </div>
       </div>

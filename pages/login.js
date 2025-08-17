@@ -33,7 +33,7 @@ export default function LoginPage() {
         <input
           type="email"
           placeholder="Email"
-          className="w-full rounded-md bg-gray-900 border border-gray-800 px-3 py-2"
+          className="w-full rounded-md bg-white border border-slate-300 px-3 py-2 text-slate-800"
           value={form.email}
           onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
           required
@@ -41,21 +41,21 @@ export default function LoginPage() {
         <input
           type="password"
           placeholder="Password"
-          className="w-full rounded-md bg-gray-900 border border-gray-800 px-3 py-2"
+          className="w-full rounded-md bg-white border border-slate-300 px-3 py-2 text-slate-800"
           value={form.password}
           onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
           required
         />
-        {error && <div className="text-red-400 text-sm">{error}</div>}
+        {error && <div className="text-red-600 text-sm">{error}</div>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-brand-600 hover:bg-brand-500 px-3 py-2 font-medium"
+          className="w-full rounded-md bg-brand-600 hover:bg-brand-500 px-3 py-2 font-medium text-white"
         >
           {loading ? 'Logging in...' : 'Log in'}
         </button>
       </form>
-      <p className="text-sm text-gray-400 mt-4">
+      <p className="text-sm text-slate-600 mt-4">
         New here? <Link className="underline" href="/signup">Create an account</Link>
       </p>
     </div>

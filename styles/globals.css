@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #05060a;
-  --foreground: #e6e8ef;
+  --background: #f8fafc;
+  --foreground: #0f172a;
   /* Minty Carolina blue */
   --gold: #7cc8ff; /* primary trim */
   --gold-soft: rgba(124, 200, 255, 0.25);
@@ -18,9 +18,10 @@ body {
 
 body {
   color: var(--foreground);
-  background: radial-gradient(1200px 800px at 10% -20%, rgba(59,130,246,0.06), transparent 50%),
-    radial-gradient(1000px 900px at 110% 10%, rgba(56,189,248,0.06), transparent 50%),
-    linear-gradient(180deg, rgba(10,12,20,1) 0%, rgba(5,6,10,1) 60%);
+  background:
+    radial-gradient(1200px 800px at 8% -10%, rgba(59,130,246,0.16), transparent 55%),
+    radial-gradient(1000px 900px at 105% 5%, rgba(236,72,153,0.10), transparent 50%),
+    linear-gradient(180deg, #ffffff 0%, var(--background) 75%);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-family: 'Inter Tight', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
@@ -43,13 +44,13 @@ a {
 
 /***** Subtle card and border styling *****/
 .shadow-soft {
-  box-shadow: 0 1px 0 0 rgba(255,255,255,0.03), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  box-shadow: 0 1px 2px 0 rgba(2,6,23,0.04), 0 1px 0 0 rgba(2,6,23,0.06) inset;
 }
 
 .border-gradient {
   border: 1px solid transparent;
   background-image: linear-gradient(var(--background), var(--background)),
-    linear-gradient(90deg, rgba(59,130,246,0.35), rgba(56,189,248,0.35));
+    linear-gradient(90deg, rgba(59,130,246,0.25), rgba(56,189,248,0.25));
   background-origin: border-box;
   background-clip: padding-box, border-box;
 }
@@ -58,14 +59,14 @@ a {
 .border-gold {
   border: 1px solid transparent;
   background-image: linear-gradient(var(--background), var(--background)),
-    linear-gradient(90deg, rgba(124,200,255,0.45), rgba(56,189,248,0.35));
+    linear-gradient(90deg, rgba(124,200,255,0.35), rgba(56,189,248,0.30));
   background-origin: border-box;
   background-clip: padding-box, border-box;
 }
 
 .focus-gold:focus {
   outline: none;
-  box-shadow: 0 0 0 1px rgba(124,200,255,0.35), 0 0 0 4px rgba(124,200,255,0.12);
+  box-shadow: 0 0 0 1px rgba(124,200,255,0.45), 0 0 0 4px rgba(124,200,255,0.18);
 }
 
 .underline-gold {
@@ -78,7 +79,7 @@ a {
   right: 0;
   bottom: -2px;
   height: 2px;
-  background: linear-gradient(90deg, #e0f2ff, #7cc8ff, #3ba9ef);
+  background: linear-gradient(90deg, #bae6fd, #7cc8ff, #60a5fa);
   opacity: 0.7;
   border-radius: 2px;
 }
@@ -106,7 +107,7 @@ a {
 }
 
 .brand-gold {
-  background: linear-gradient(180deg, #e0f2ff 0%, #7cc8ff 45%, #3ba9ef 100%);
+  background: linear-gradient(180deg, #bae6fd 0%, #7cc8ff 45%, #60a5fa 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -131,7 +132,7 @@ a {
   color: #0b1220;
 }
 .bubble-other {
-  background-color: #0f1724;
-  color: #e6e8ef;
-  border: 1px solid rgba(124,200,255,0.2);
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid rgba(2,6,23,0.06);
 }
