@@ -13,6 +13,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
   const listRef = useRef(null);
   const prevRoomRef = useRef(null);
   const messageIdsRef = useRef(new Set());
+  const earliestRef = useRef(null);
 
   function normalizeMessage(raw) {
     if (!raw) return raw;
@@ -64,6 +65,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
           const ids = new Set(normalized.map((m) => m._id || '')); 
           messageIdsRef.current = ids;
           setMessages(normalized);
+          earliestRef.current = normalized[0]?.createdAt || null;
         }
       } catch (err) {
         console.error('Error loading messages', err);
@@ -137,6 +139,24 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages]);
 
+  async function loadOlder() {
+    if (!earliestRef.current) return;
+    try {
+      const res = await fetch(`/api/chat/messages?roomId=${roomId}&before=${encodeURIComponent(earliestRef.current)}&limit=100`, { credentials: 'same-origin' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const normalized = (data.messages || []).map((m) => normalizeMessage(m));
+      if (!normalized.length) return;
+      earliestRef.current = normalized[0]?.createdAt || earliestRef.current;
+      // prepend without duplicates
+      setMessages((prev) => {
+        const prevIds = new Set(prev.map((m) => m._id || ''));
+        const deduped = normalized.filter((m) => !prevIds.has(m._id || ''));
+        return [...deduped, ...prev];
+      });
+    } catch {}
+  }
+
   function onTyping() {
     if (locked) return;
     socket.emit('typing', { roomId, userId: user._id });
@@ -177,11 +197,11 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
     const url = meta.profilePictureUrl;
     const name = meta.username || 'User';
     if (url) {
-      return <img src={url} alt={name} title={name} className="w-6 h-6 rounded-full object-cover border border-slate-200" />;
+      return <img src={url} alt={name} title={name} className="w-7 h-7 sm:w-6 sm:h-6 rounded-full object-cover border border-slate-200" />;
     }
     const initial = (name || '?').slice(0, 1).toUpperCase();
     return (
-      <div title={name} className="w-6 h-6 rounded-full bg-slate-300 text-slate-700 text-xs flex items-center justify-center border border-slate-200">
+      <div title={name} className="w-7 h-7 sm:w-6 sm:h-6 rounded-full bg-slate-300 text-slate-700 text-xs flex items-center justify-center border border-slate-200">
         {initial}
       </div>
     );
@@ -195,14 +215,21 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
           <div className="rounded-md bg-slate-200 text-slate-800 px-2 py-1 font-mono">{mins != null ? `${mins}:${secs.toString().padStart(2, '0')}` : '--:--'}</div>
         </div>
       )}
-      <div ref={listRef} className="flex-1 overflow-y-auto space-y-2 p-3 pb-40 sm:pb-3">
+      <div
+        ref={listRef}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          if (el.scrollTop <= 0) loadOlder();
+        }}
+        className="flex-1 overflow-y-auto space-y-2 p-3 pb-40 sm:pb-3"
+      >
         {messages.map((m) => {
           const mine = String(m.senderId) === String(user._id);
           return (
             <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
               <div className={`flex items-end gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
                 <Avatar senderId={m.senderId} />
-                <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm shadow ${mine ? 'bubble-mine' : 'bubble-other'}`}>
+                <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-base sm:text-sm shadow ${mine ? 'bubble-mine' : 'bubble-other'}`}>
                   {m.content}
                 </div>
               </div>
@@ -220,10 +247,10 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
             onChange={(e) => setInput(e.target.value)}
             onInput={onTyping}
             placeholder={locked ? 'Debate is closed' : 'Type a message'}
-            className={`flex-1 rounded-full bg-white border border-slate-300 px-4 py-2 text-sm text-slate-800 ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex-1 rounded-full bg-white border border-slate-300 px-4 py-3 text-base text-slate-800 ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={locked}
           />
-          <button disabled={locked} className={`rounded-full px-4 py-2 text-sm font-medium btn-mint ${locked ? 'opacity-60 cursor-not-allowed' : ''}`}>{locked ? 'Closed' : 'Send'}</button>
+          <button disabled={locked} className={`rounded-full px-5 py-3 text-base font-medium btn-mint ${locked ? 'opacity-60 cursor-not-allowed' : ''}`}>{locked ? 'Closed' : 'Send'}</button>
         </div>
       </form>
     </div>

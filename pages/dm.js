@@ -51,7 +51,7 @@ export default function DMPage() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 h-[calc(100vh-120px)] sm:h-[85vh]">
-      <aside className="border-r border-slate-200 p-3 space-y-3 overflow-y-auto">
+      <aside className="border-b sm:border-b-0 sm:border-r border-slate-200 p-3 space-y-3 overflow-y-auto block sm:min-w-[260px]">
         <div>
           <div className="text-xs text-slate-500 mb-1">Start a DM</div>
           <input

@@ -17,16 +17,11 @@ export default function Home() {
               <span className="brand-mark brand-gold">ArguMint</span>
             </h1>
             <p className="text-sm sm:text-base text-slate-600 mt-3 max-w-2xl mx-auto">
-              Post your take, debate live, and earn Solana tokens.
+              Post your take, debate live, earn Solana tokens.
             </p>
             <div className="mt-6 flex items-center justify-center gap-3">
-              <Link href="/debate" className="rounded-full btn-mint px-4 py-2 text-sm sm:text-base font-medium">Join a debate</Link>
-              <Link href="/dm" className="rounded-full bg-white border border-slate-300 hover:bg-slate-50 px-4 py-2 text-sm sm:text-base font-medium text-slate-800">
-                <span className="inline-flex items-center gap-2">
-                  <Image src="/icon.jpeg" alt="icon" width={18} height={18} className="rounded-sm border border-gold" />
-                  Open DMs
-                </span>
-              </Link>
+              <Link href="/debate" className="rounded-full btn-mint px-4 py-2 text-sm sm:text-base font-medium">--- ArguMint --- </Link>
+              
             </div>
           </div>
           <div className="pointer-events-none absolute -right-10 -bottom-10 w-52 h-52 sm:w-72 sm:h-72 rounded-full bg-brand-100/40 blur-3xl" />

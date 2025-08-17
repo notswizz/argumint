@@ -9,7 +9,7 @@ export default function AppLayout({ children }) {
   const user = me?.user;
 
   return (
-    <div className="min-h-screen text-slate-800">
+    <div className="min-h-screen text-slate-800 app-root">
       <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
           <Link href="/" className="text-lg font-semibold tracking-tight text-slate-900">
@@ -35,7 +35,7 @@ export default function AppLayout({ children }) {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6 pb-28 sm:pb-6">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-6 pb-28 sm:pb-6 app-main">{children}</main>
       <nav className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200/80 bg-white/85 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 grid grid-cols-4 text-base text-slate-600">
           <Link href="/prompt" className="text-center py-3 hover:text-slate-900">Prompt</Link>

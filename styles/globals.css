@@ -136,3 +136,27 @@ a {
   color: #334155;
   border: 1px solid rgba(2,6,23,0.06);
 }
+
+/* Lock scroll on mobile: only in-app scroll areas (e.g., chat lists) should scroll */
+@media (max-width: 640px) {
+  html, body, #__next {
+    height: 100%;
+    overscroll-behavior: none;
+  }
+  body {
+    overflow: hidden;
+  }
+  #__next {
+    overflow: hidden;
+  }
+  .app-root {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .app-main {
+    flex: 1;
+    overflow: hidden;
+  }
+}

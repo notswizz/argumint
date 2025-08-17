@@ -9,14 +9,28 @@ export default async function handler(req, res) {
   await connectToDatabase();
 
   if (req.method === 'GET') {
-    const { roomId, limit = 200, since } = req.query;
+    const { roomId, limit = 200, since, before } = req.query;
     if (!roomId) return res.status(400).json({ error: 'Missing roomId' });
+    const lim = Math.min(Number(limit) || 200, 500);
     const query = { roomId };
-    if (since) query.createdAt = { $gt: new Date(since) };
-    const items = await Message.find(query)
-      .sort({ createdAt: 1 })
-      .limit(Number(limit))
+    let sort = { createdAt: 1 };
+
+    if (since) {
+      query.createdAt = { ...(query.createdAt || {}), $gt: new Date(since) };
+      sort = { createdAt: 1 };
+    }
+    // Pagination backwards in time for history
+    if (before) {
+      query.createdAt = { ...(query.createdAt || {}), $lt: new Date(before) };
+      sort = { createdAt: -1 };
+    }
+
+    let items = await Message.find(query)
+      .sort(sort)
+      .limit(lim)
       .lean();
+    // For descending fetches, return ascending to simplify client rendering
+    if (sort.createdAt === -1) items = [...items].reverse();
     return res.status(200).json({ messages: items });
   }
 
