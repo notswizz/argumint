@@ -24,7 +24,6 @@ export default function AppLayout({ children }) {
             <nav className="hidden sm:flex items-center gap-4 text-sm">
               <Link href="/prompt" className="hover:text-slate-900 text-slate-600">Prompt</Link>
               <Link href="/debate" className="hover:text-slate-900 text-slate-600">Debate</Link>
-              <Link href="/dm" className="hover:text-slate-900 text-slate-600">DM</Link>
               <Link href="/profile" className="hover:text-slate-900 text-slate-600">Profile</Link>
             </nav>
             {user ? (
@@ -42,11 +41,19 @@ export default function AppLayout({ children }) {
       </header>
       <main className={`mx-auto max-w-none sm:max-w-6xl px-3 sm:px-4 py-3 sm:py-6 pb-28 sm:pb-6 app-main ${isHome ? 'app-main-scroll' : ''}`}>{children}</main>
       <nav className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200/80 bg-white/85 backdrop-blur" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
-        <div className="mx-auto max-w-none px-3 py-3 grid grid-cols-4 text-base text-slate-600">
-          <Link href="/prompt" className="text-center py-3 hover:text-slate-900">Prompt</Link>
-          <Link href="/debate" className="text-center py-3 hover:text-slate-900">Debate</Link>
-          <Link href="/dm" className="text-center py-3 hover:text-slate-900">DM</Link>
-          <Link href="/profile" className="text-center py-2 hover:text-slate-900">Profile</Link>
+        <div className="mx-auto max-w-none px-3 py-2 grid grid-cols-3 text-sm text-slate-600">
+          <Link href="/prompt" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
+            <Image src="/file.svg" alt="Prompt" width={22} height={22} />
+            <span>Prompt</span>
+          </Link>
+          <Link href="/debate" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
+            <Image src="/globe.svg" alt="Debate" width={22} height={22} />
+            <span>Debate</span>
+          </Link>
+          <Link href="/profile" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
+            <Image src="/window.svg" alt="Profile" width={22} height={22} />
+            <span>Profile</span>
+          </Link>
         </div>
       </nav>
     </div>

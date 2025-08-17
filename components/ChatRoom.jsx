@@ -251,7 +251,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
           const el = e.currentTarget;
           if (el.scrollTop <= 0) loadOlder();
         }}
-        className="flex-1 overflow-y-auto space-y-1.5 p-2 pb-40 sm:pb-2"
+        className="flex-1 overflow-y-auto space-y-1.5 p-2 pb-44 sm:pb-2"
       >
         {messages.map((m) => {
           const mine = String(m.senderId) === String(user._id);
@@ -314,7 +314,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
           <div className="text-xs text-slate-500">Someone is typing...</div>
         )}
       </div>
-      <form onSubmit={sendMessage} className="sm:static fixed z-40 bottom-16 inset-x-0 sm:inset-auto p-2 sm:p-2 border-t border-slate-200 bg-white/90 backdrop-blur" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
+      <form onSubmit={sendMessage} className="sm:static fixed z-40 bottom-20 inset-x-0 sm:inset-auto p-2 sm:p-2 border-t border-slate-200 bg-white/90 backdrop-blur" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
         <div className="mx-auto max-w-3xl flex gap-2">
           <input
             value={input}

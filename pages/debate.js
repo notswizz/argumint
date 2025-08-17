@@ -15,6 +15,7 @@ export default function DebatePage() {
   const { data: triadData } = useSWR(activeRoom ? `/api/triads/by-room?roomId=${activeRoom._id}` : null, fetcher);
   const triad = triadData?.triad;
   const activeTriad = triad && triad.status === 'active' ? triad : null;
+  const triadExists = Boolean(triad && triad._id);
   const { data: introData } = useSWR(triad ? `/api/triads/intro?triadId=${triad._id}` : null, fetcher);
 
   useEffect(() => {
@@ -44,10 +45,14 @@ export default function DebatePage() {
     );
   }
 
+  const gridClasses = roomsOpen
+    ? 'grid grid-cols-1 lg:grid-cols-[300px_1fr]'
+    : 'grid grid-cols-1';
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 h-[calc(100dvh-120px)] md:h-[85vh] w-full">
+    <div className={`${gridClasses} h-[calc(100dvh-120px)] w-full`}>
       {roomsOpen && (
-      <aside className="border-r border-slate-200 p-3 space-y-3 md:block hidden overflow-y-auto max-w-full">
+      <aside className="border-r border-slate-200 p-3 space-y-3 lg:block hidden overflow-y-auto max-w-full w-[300px]">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -79,12 +84,12 @@ export default function DebatePage() {
         </div>
       </aside>
       )}
-      <main className={`${roomsOpen ? 'md:col-span-2' : 'md:col-span-3'} p-2 md:p-2 space-y-2 relative flex flex-col min-h-0 w-full`}>
-        <div className="md:hidden flex items-center justify-between mb-1">
+      <main className={`p-2 lg:p-2 space-y-2 relative flex flex-col min-h-0 w-full`}>
+        <div className="lg:hidden flex items-center justify-between mb-1">
           <button onClick={() => setShowRooms(true)} className="rounded-md bg-slate-200 border border-slate-300 px-3 py-2 text-xs text-slate-800">Debates</button>
           {activeRoom && <div className="text-xs text-slate-500 truncate max-w-[60%]">{activeRoom.name || 'Debate Room'}</div>}
         </div>
-        <div className="hidden md:flex items-center justify-between mb-1">
+        <div className="hidden lg:flex items-center justify-between mb-1">
           <button onClick={() => setRoomsOpen((v) => !v)} className="rounded-md bg-slate-200 border border-slate-300 px-3 py-1.5 text-[11px] text-slate-800">
             {roomsOpen ? 'Hide Past Debates' : 'Show Past Debates'}
           </button>
@@ -110,10 +115,10 @@ export default function DebatePage() {
             <ChatRoom
               roomId={activeRoom._id}
               user={user}
-              triadId={activeTriad?._id || null}
-              promptId={activeTriad?.prompt?._id || activeTriad?.promptId || null}
-              triadStartedAt={activeTriad?.startedAt || null}
-              triadDurationSec={activeTriad?.durationSec || 600}
+              triadId={triadExists ? triad._id : null}
+              promptId={triadExists ? (triad?.prompt?._id || triad?.promptId || null) : null}
+              triadStartedAt={triadExists ? (triad?.startedAt || null) : null}
+              triadDurationSec={triadExists ? (triad?.durationSec || 600) : 600}
             />
           ) : (
             <div className="p-4 text-slate-500">Select a debate</div>
