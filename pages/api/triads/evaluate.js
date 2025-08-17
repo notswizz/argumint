@@ -81,11 +81,13 @@ export default async function handler(req, res) {
       userScores = (t.participants || []).map((uid) => ({ userId: uid, score: 50 }));
     }
 
-    await Triad.updateOne({ _id: t._id }, { userScores, groupFeedback });
+    // Persist per-user results and group feedback, and set score to the average to keep card + triad in sync
+    const avgScore = Math.round(userScores.reduce((s, u) => s + (u.score || 0), 0) / Math.max(1, userScores.length));
+    await Triad.updateOne({ _id: t._id }, { userScores, groupFeedback, score: avgScore });
 
     t.userScores = userScores;
-    t.score = triadScore;
-    if (!best || triadScore > best.score) best = t;
+    t.score = triadScore || avgScore || 0;
+    if (!best || (t.score || 0) > (best.score || 0)) best = t;
   }
 
   // Mark winner and award tokens

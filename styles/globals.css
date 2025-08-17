@@ -137,6 +137,11 @@ a {
   border: 1px solid rgba(2,6,23,0.06);
 }
 
+/* Bubbles wrap to multiple lines but keep compact width up to max */
+.bubble-mine, .bubble-other {
+  white-space: pre-wrap;
+}
+
 /* Lock scroll on mobile: only in-app scroll areas (e.g., chat lists) should scroll */
 @media (max-width: 640px) {
   html, body, #__next {

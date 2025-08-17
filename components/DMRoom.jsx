@@ -164,7 +164,7 @@ export default function DMRoom({ roomId, user }) {
             <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
               <div className={`flex items-end gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
                 <Avatar senderId={m.senderId} />
-                <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-base sm:text-sm shadow ${mine ? 'bubble-mine' : 'bubble-other'}`}>
+                <div className={`w-fit max-w-[85%] sm:max-w-[75%] break-words rounded-2xl px-4 py-3 text-base sm:text-sm leading-snug shadow ${mine ? 'bubble-mine' : 'bubble-other'}`}>
                   {m.content}
                 </div>
               </div>
