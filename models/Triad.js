@@ -12,6 +12,11 @@ const TriadSchema = new Schema(
     status: { type: String, enum: ['pending', 'active', 'finished'], default: 'pending' },
     score: { type: Number, default: 0 },
     isWinner: { type: Boolean, default: false },
+    // New: winnerUserId for individual winner (bot or human)
+    winnerUserId: { type: Schema.Types.ObjectId, ref: 'User' },
+    // New: bot participant tracking
+    botUserId: { type: Schema.Types.ObjectId, ref: 'User' },
+    botPersonaKey: { type: String },
     userScores: {
       type: [
         new Schema(
