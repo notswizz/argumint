@@ -12,14 +12,8 @@ const TriadSchema = new Schema(
     status: { type: String, enum: ['pending', 'active', 'finished'], default: 'pending' },
     score: { type: Number, default: 0 },
     isWinner: { type: Boolean, default: false },
-    // New: winnerUserId for individual winner (bot or human)
+    // winnerUserId retained for human-only winner
     winnerUserId: { type: Schema.Types.ObjectId, ref: 'User' },
-    // New: bot participant tracking
-    botUserId: { type: Schema.Types.ObjectId, ref: 'User' },
-    botPersonaKey: { type: String },
-    // Bot throttling/locks
-    botReplyingAt: { type: Date },
-    botLastReplyAt: { type: Date },
     userScores: {
       type: [
         new Schema(
