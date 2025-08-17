@@ -7,11 +7,12 @@ export default function ProfilePage() {
   const { data } = useSWR('/api/auth/me', fetcher);
   const user = data?.user;
   const { data: tx } = useSWR(user ? `/api/tokens/history?userId=${user._id}` : null, fetcher);
+  const { data: perf } = useSWR(user ? '/api/users/performance' : null, fetcher);
 
   if (!user) return <div className="p-4">Please log in.</div>;
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-4">
+    <div className="max-w-5xl mx-auto p-4 space-y-4">
       <div className="rounded-xl border border-slate-200 p-4 bg-white">
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-full bg-slate-200" />
@@ -21,6 +22,74 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Performance Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="rounded-xl border border-slate-200 p-4 bg-white">
+          <div className="text-xs uppercase tracking-wide text-slate-500 mb-2">Overall</div>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div><div className="text-slate-500">Debates</div><div className="text-lg font-semibold">{perf?.summary?.debatesParticipated ?? 0}</div></div>
+            <div><div className="text-slate-500">Group wins</div><div className="text-lg font-semibold">{perf?.summary?.groupWins ?? 0}</div></div>
+            <div><div className="text-slate-500">My avg</div><div className="text-lg font-semibold">{perf?.summary?.indAvg ?? 0}</div></div>
+            <div><div className="text-slate-500">Group avg</div><div className="text-lg font-semibold">{perf?.summary?.groupAvg ?? 0}</div></div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 p-4 bg-white">
+          <div className="text-xs uppercase tracking-wide text-slate-500 mb-2">Best / Worst</div>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div><div className="text-slate-500">My best</div><div className="text-lg font-semibold">{perf?.summary?.indBest ?? 0}</div></div>
+            <div><div className="text-slate-500">My worst</div><div className="text-lg font-semibold">{perf?.summary?.indWorst ?? 0}</div></div>
+            <div><div className="text-slate-500">Group best</div><div className="text-lg font-semibold">{perf?.summary?.groupBest ?? 0}</div></div>
+            <div><div className="text-slate-500">Group worst</div><div className="text-lg font-semibold">{perf?.summary?.groupWorst ?? 0}</div></div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 p-4 bg-white">
+          <div className="text-xs uppercase tracking-wide text-slate-500 mb-2">Placements</div>
+          <div className="flex items-center gap-3">
+            <span className="rounded-md bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[11px]">#1 {perf?.summary?.placeDist?.first ?? 0}</span>
+            <span className="rounded-md bg-sky-100 text-sky-700 px-2 py-0.5 text-[11px]">#2 {perf?.summary?.placeDist?.second ?? 0}</span>
+            <span className="rounded-md bg-slate-100 text-slate-700 px-2 py-0.5 text-[11px]">#3 {perf?.summary?.placeDist?.third ?? 0}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent history */}
+      <div className="rounded-xl border border-slate-200 p-4 bg-white">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-xs uppercase tracking-wide text-slate-500">Recent debates</div>
+          <div className="text-xs text-slate-500">Most recent first</div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-500">
+                <th className="py-2 pr-3">Prompt</th>
+                <th className="py-2 pr-3">Date</th>
+                <th className="py-2 pr-3">Group</th>
+                <th className="py-2 pr-3">My score</th>
+                <th className="py-2 pr-3">My place</th>
+                <th className="py-2 pr-3">Members</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(perf?.recent || []).map((r) => (
+                <tr key={r.triadId} className="border-t border-slate-100">
+                  <td className="py-2 pr-3 max-w-[420px] truncate" title={r.promptText}>{r.promptText || '—'}</td>
+                  <td className="py-2 pr-3 text-slate-600">{r.date ? new Date(r.date).toLocaleString() : '—'}</td>
+                  <td className="py-2 pr-3"><span className="rounded-md bg-slate-200 text-slate-800 px-2 py-0.5 text-[11px] font-mono">{r.groupScore ?? 0}</span> {r.isGroupWinner && (<span className="ml-1 rounded-md bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[10px] uppercase tracking-wide">Winner</span>)}</td>
+                  <td className="py-2 pr-3 font-mono">{r.myScore ?? 0}</td>
+                  <td className="py-2 pr-3">{r.myPlace ? `#${r.myPlace}` : '—'}</td>
+                  <td className="py-2 pr-3 text-slate-600">{r.participants ?? 0}</td>
+                </tr>
+              ))}
+              {(!perf?.recent || perf.recent.length === 0) && (
+                <tr><td colSpan="6" className="py-6 text-center text-slate-500 text-sm">No debates yet</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <TokenDisplay tokens={user.tokens} history={tx?.history || []} />
     </div>
   );
