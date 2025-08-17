@@ -13,6 +13,7 @@ export default function ChatPage() {
   const [showRooms, setShowRooms] = useState(false);
   const { data: triadData } = useSWR(activeRoom ? `/api/triads/by-room?roomId=${activeRoom._id}` : null, fetcher);
   const triad = triadData?.triad;
+  const activeTriad = triad && triad.status === 'active' ? triad : null;
   const { data: introData } = useSWR(triad ? `/api/triads/intro?triadId=${triad._id}` : null, fetcher);
 
   useEffect(() => {
@@ -100,10 +101,10 @@ export default function ChatPage() {
             <ChatRoom
               roomId={activeRoom._id}
               user={user}
-              triadId={triad?._id || null}
-              promptId={triad?.prompt?._id || triad?.promptId || null}
-              triadStartedAt={triad?.startedAt || null}
-              triadDurationSec={triad?.durationSec || 600}
+              triadId={activeTriad?._id || null}
+              promptId={activeTriad?.prompt?._id || activeTriad?.promptId || null}
+              triadStartedAt={activeTriad?.startedAt || null}
+              triadDurationSec={activeTriad?.durationSec || 600}
             />
           ) : (
             <div className="p-4 text-slate-500">Select a room</div>
