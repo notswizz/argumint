@@ -16,39 +16,15 @@ const TEN_MIN = 10 * 60 * 1000;
 
 export default async function handler(req, res) {
   await connectToDatabase();
-  const now = new Date();
-
-  // 1) Ensure 5 AI active (10-min deadline, then 5-min staggers)
-  const activePrompts = await Prompt.find({ active: true, scheduledFor: { $gt: now }, category: { $ne: 'user' } })
-    .sort({ scheduledFor: 1 })
-    .lean();
-  const deficit = Math.max(0, 5 - activePrompts.length);
-  if (deficit > 0) {
-    try {
-      const generated = await generateDebatePrompts();
-      if (!generated?.length) return res.status(500).json({ error: 'AI generation returned no prompts' });
-      const toCreate = generated.slice(0, deficit).map((g, idx) => ({
-        text: g.text,
-        category: g.category,
-        active: true,
-        scheduledFor: new Date(Date.now() + TEN_MIN + idx * FIVE_MIN),
-      }));
-      if (toCreate.length) await Prompt.insertMany(toCreate);
-    } catch (e) {
-      return res.status(500).json({ error: e.message || 'AI prompt generation failed' });
-    }
-  }
-
-  // 2) Schedule triads for prompts whose timers ended
-  await scheduleDuePrompts();
-
-  // 3) Immediately top back up to 5 AI with 10-min base and 5-min staggers
+  // Single cron endpoint: schedule due prompts, ensure five active, evaluate expired
+  try {
+    await scheduleDuePrompts();
+  } catch {}
   try {
     await ensureFiveActivePrompts();
-  } catch (e) {}
-
-  // 4) Auto-finish and evaluate triads whose 10m elapsed
-  await evaluateExpiredTriads();
-
+  } catch {}
+  try {
+    await evaluateExpiredTriads();
+  } catch {}
   return res.status(200).json({ ok: true });
-} 
+}
