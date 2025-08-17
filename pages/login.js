@@ -28,6 +28,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/farcaster', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ fid, username, pfpUrl, custodyAddress: null }),
       });
       const data = await res.json();

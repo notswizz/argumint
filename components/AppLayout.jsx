@@ -2,17 +2,19 @@ import Link from 'next/link';
 import useSWR from 'swr';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
+import MiniAppAutoLogin from './MiniAppAutoLogin';
 
 const fetcher = (url) => fetch(url).then((r) => r.json());
 
 export default function AppLayout({ children }) {
-  const { data: me } = useSWR('/api/auth/me', fetcher);
+  const { data: me } = useSWR('/api/auth/me', (url) => fetch(url, { credentials: 'include' }).then((r) => r.json()));
   const user = me?.user;
   const router = useRouter();
   const isHome = router.pathname === '/';
 
   return (
     <div className="min-h-screen text-slate-800 app-root">
+      <MiniAppAutoLogin />
       <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
           <Link href="/" className="text-lg font-semibold tracking-tight text-slate-900">

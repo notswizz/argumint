@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     }
 
     const token = signJwt({ _id: user._id, fid: user.fid, username: user.username, address });
-    res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; Max-Age=604800; SameSite=Lax`);
+    res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; Max-Age=604800; SameSite=None; Secure`);
     return res.status(200).json({ user: { _id: user._id, fid: user.fid, username: user.username, tokens: user.tokens } });
   } catch (e) {
     return res.status(500).json({ error: 'Server error', detail: e?.message || 'unknown' });
