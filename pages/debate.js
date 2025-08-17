@@ -45,9 +45,9 @@ export default function DebatePage() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 h-[calc(100vh-120px)] sm:h-[85vh]">
+    <div className="grid grid-cols-1 md:grid-cols-3 h-[calc(100dvh-120px)] md:h-[85vh] w-full">
       {roomsOpen && (
-      <aside className="border-r border-slate-200 p-3 space-y-3 sm:block hidden overflow-y-auto">
+      <aside className="border-r border-slate-200 p-3 space-y-3 md:block hidden overflow-y-auto">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -79,12 +79,12 @@ export default function DebatePage() {
         </div>
       </aside>
       )}
-      <main className={`${roomsOpen ? 'sm:col-span-2' : 'sm:col-span-3'} p-2 sm:p-2 space-y-2 relative flex flex-col min-h-0`}>
-        <div className="sm:hidden flex items-center justify-between mb-1">
+      <main className={`${roomsOpen ? 'md:col-span-2' : 'md:col-span-3'} p-2 md:p-2 space-y-2 relative flex flex-col min-h-0`}>
+        <div className="md:hidden flex items-center justify-between mb-1">
           <button onClick={() => setShowRooms(true)} className="rounded-md bg-slate-200 border border-slate-300 px-3 py-2 text-xs text-slate-800">Debates</button>
           {activeRoom && <div className="text-xs text-slate-500 truncate max-w-[60%]">{activeRoom.name || 'Debate Room'}</div>}
         </div>
-        <div className="hidden sm:flex items-center justify-between mb-1">
+        <div className="hidden md:flex items-center justify-between mb-1">
           <button onClick={() => setRoomsOpen((v) => !v)} className="rounded-md bg-slate-200 border border-slate-300 px-3 py-1.5 text-[11px] text-slate-800">
             {roomsOpen ? 'Hide Past Debates' : 'Show Past Debates'}
           </button>
@@ -121,7 +121,7 @@ export default function DebatePage() {
         </div>
 
         {showRooms && (
-          <div className="sm:hidden absolute inset-0 z-40 bg-black/20 backdrop-blur">
+          <div className="md:hidden absolute inset-0 z-40 bg-black/20 backdrop-blur">
             <div className="absolute inset-0 bg-white p-3">
               <div className="flex items-center gap-2 mb-3">
                 <input
