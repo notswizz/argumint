@@ -19,8 +19,8 @@ export default function AppLayout({ children }) {
             <nav className="hidden sm:flex items-center gap-4 text-sm">
               <Link href="/prompt" className="hover:text-slate-900 text-slate-600">Prompt</Link>
               <Link href="/chat" className="hover:text-slate-900 text-slate-600">Chat</Link>
+              <Link href="/dm" className="hover:text-slate-900 text-slate-600">DM</Link>
               <Link href="/profile" className="hover:text-slate-900 text-slate-600">Profile</Link>
-              <Link href="/admin" className="hover:text-slate-900 text-slate-600">Admin</Link>
             </nav>
             {user ? (
               <div className="text-xs sm:text-sm text-slate-700 border-gold rounded-full px-3 py-1 inline-block bg-white/60">
@@ -40,8 +40,8 @@ export default function AppLayout({ children }) {
         <div className="mx-auto max-w-6xl px-4 py-3 grid grid-cols-4 text-base text-slate-600">
           <Link href="/prompt" className="text-center py-3 hover:text-slate-900">Prompt</Link>
           <Link href="/chat" className="text-center py-3 hover:text-slate-900">Chat</Link>
-          <Link href="/profile" className="text-center py-3 hover:text-slate-900">Profile</Link>
-          <Link href="/admin" className="text-center py-2 hover:text-slate-900">Admin</Link>
+          <Link href="/dm" className="text-center py-3 hover:text-slate-900">DM</Link>
+          <Link href="/profile" className="text-center py-2 hover:text-slate-900">Profile</Link>
         </div>
       </nav>
     </div>
