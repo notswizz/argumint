@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useMiniApp } from '@neynar/react';
-import { sdk } from '@farcaster/miniapp-sdk';
 
 export default function LoginPage() {
   const { isSDKLoaded, context } = useMiniApp();
@@ -8,10 +7,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const init = async () => {
-      try { await sdk.actions.ready(); } catch (_) {}
-    };
-    init();
+    // SDK readiness is handled by the provider; nothing extra needed here.
   }, []);
 
   async function signInWithFarcaster() {
@@ -28,28 +24,7 @@ export default function LoginPage() {
       const pfpUrl = context?.user?.pfpUrl || context?.user?.pfp?.url || null;
       if (!fid) throw new Error('Missing Farcaster identity (fid) in context');
 
-      // Prefer signature-based verification when provider is available
-      const provider = sdk?.wallet?.ethProvider;
-      if (provider) {
-        const accounts = await provider.request({ method: 'eth_requestAccounts', params: [] });
-        const address = (accounts && accounts[0]) || null;
-        if (!address) throw new Error('No wallet address found');
-        const challenge = await fetch('/api/auth/fc-challenge').then((r) => r.json());
-        const message = challenge?.message;
-        if (!message) throw new Error('Failed to fetch challenge');
-        const signature = await provider.request({ method: 'personal_sign', params: [message, address] });
-        const res = await fetch('/api/auth/farcaster-verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, signature, address, fid, username, pfpUrl }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to sign in');
-        window.location.href = '/profile';
-        return;
-      }
-
-      // Fallback: context-only session (no wallet signature)
+      // Mini App context-only session (no wallet signature)
       const res = await fetch('/api/auth/farcaster', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
