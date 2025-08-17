@@ -31,18 +31,25 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
   useEffect(() => {
     let mounted = true;
     async function loadHistory() {
-      const socketBase = process.env.NEXT_PUBLIC_SOCKET_BASE || '';
-      const apiBase = socketBase || '';
-      const res = await fetch(`${apiBase}/api/chat/messages?roomId=${roomId}`);
-      const data = await res.json();
-      if (mounted && Array.isArray(data.messages)) setMessages(data.messages);
+      try {
+        const res = await fetch(`/api/chat/messages?roomId=${roomId}`, { credentials: 'same-origin' });
+        if (!res.ok) {
+          console.error('Failed to load messages', res.status);
+          return;
+        }
+        const data = await res.json();
+        if (mounted && Array.isArray(data.messages)) setMessages(data.messages);
+      } catch (err) {
+        console.error('Error loading messages', err);
+      }
     }
     loadHistory();
 
-    const socketBase = process.env.NEXT_PUBLIC_SOCKET_BASE || '';
-    fetch(`${socketBase}/api/socket`);
+    fetch(`/api/socket`);
     if (!socket) {
-      socket = io(socketBase || undefined, { path: '/api/socket/io', transports: ['websocket', 'polling'] });
+      const socketBase = process.env.NEXT_PUBLIC_SOCKET_BASE || undefined;
+      socket = io(socketBase, { path: '/api/socket/io', transports: ['websocket', 'polling'] });
+      socket.on('connect_error', (e) => console.error('Socket connect_error', e?.message || e));
     }
 
     // Leave the previous room to avoid receiving its events
