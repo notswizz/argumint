@@ -65,7 +65,7 @@ export default async function handler(req, res) {
       }
       try {
         if (triadId && promptId) {
-          // Fire-and-forget bot triggers; do not block user response
+          // Trigger immediately for every message (no delay)
           triggerBotReplies({ roomId, triadId, promptId, excludeUserId: user._id });
         }
       } catch {}
