@@ -45,10 +45,17 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
     }
     loadHistory();
 
-    fetch(`/api/socket`);
+    const socketBase = (process.env.NEXT_PUBLIC_SOCKET_BASE || '').trim() || undefined;
+    const usingExternal = Boolean(socketBase);
+    if (!usingExternal) {
+      // Warm up Next.js Socket.IO server only for same-origin
+      fetch(`/api/socket`);
+    }
     if (!socket) {
-      const socketBase = process.env.NEXT_PUBLIC_SOCKET_BASE || undefined;
-      socket = io(socketBase, { path: '/api/socket/io', transports: ['websocket', 'polling'] });
+      socket = io(socketBase, {
+        path: usingExternal ? '/socket.io' : '/api/socket/io',
+        transports: ['websocket', 'polling'],
+      });
       socket.on('connect_error', (e) => console.error('Socket connect_error', e?.message || e));
     }
 
@@ -93,11 +100,31 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
     socket.emit('typing', { roomId, userId: user._id });
   }
 
-  function sendMessage(e) {
+  async function sendMessage(e) {
     e.preventDefault();
     if (locked || !input.trim()) return;
-    socket.emit('message', { roomId, userId: user._id, content: input, isDebate: Boolean(triadId), triadId, promptId });
+    const content = input;
     setInput('');
+    try {
+      // Persist first via REST (works on Vercel and local)
+      const res = await fetch('/api/chat/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ roomId, content, isDebate: Boolean(triadId), triadId, promptId }),
+      });
+      if (res.ok) {
+        const { message } = await res.json();
+        // Optimistically add if server didn’t echo via socket quickly
+        setMessages((prev) => [...prev, message]);
+        // Fire-and-forget socket broadcast for other clients
+        socket.emit('message', { roomId, userId: user._id, content, isDebate: Boolean(triadId), triadId, promptId, alreadySaved: true, _id: message?._id });
+      } else {
+        console.error('POST /api/chat/messages failed', res.status);
+      }
+    } catch (err) {
+      console.error('sendMessage error', err);
+    }
   }
 
   const mins = remaining != null ? Math.floor(remaining / 60) : null;
