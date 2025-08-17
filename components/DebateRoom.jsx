@@ -47,7 +47,7 @@ export default function DebateRoom({ debate, user }) {
 
       {intros.length > 0 && (
         <div className="rounded-lg border border-slate-200 bg-white p-3">
-          <div className="text-xs text-slate-500 mb-2">Participants' responses</div>
+          <div className="text-xs text-slate-500 mb-2">Participants&apos; responses</div>
           <ul className="space-y-2">
             {intros.map((it) => (
               <li key={it.userId} className="text-sm">

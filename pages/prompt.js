@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 
 const fetcher = (url) => fetch(url).then((r) => r.json());
@@ -9,8 +9,8 @@ export default function PromptPage() {
   const { data: aiData, mutate: mutateAi } = useSWR('/api/prompts/active?ai=1', fetcher);
   const { data: usersData, mutate: mutateUsers } = useSWR('/api/prompts/active?users=1', fetcher);
   const { data: mineData, mutate: mutateMine } = useSWR(user ? '/api/prompts/mine?limit=500' : null, fetcher);
-  const aiPrompts = aiData?.prompts || [];
-  const userPrompts = usersData?.prompts || [];
+  const aiPrompts = useMemo(() => aiData?.prompts || [], [aiData?.prompts]);
+  const userPrompts = useMemo(() => usersData?.prompts || [], [usersData?.prompts]);
   const responses = new Map((mineData?.responses || []).map((r) => [r.promptId, r.response]));
 
   const [tab, setTab] = useState('active');
