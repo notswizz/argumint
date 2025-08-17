@@ -14,6 +14,8 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
   const prevRoomRef = useRef(null);
   const messageIdsRef = useRef(new Set());
   const earliestRef = useRef(null);
+  const latestRef = useRef(null);
+  const lastSocketAtRef = useRef(0);
 
   function normalizeMessage(raw) {
     if (!raw) return raw;
@@ -32,6 +34,12 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
     if (messageIdsRef.current.has(key)) return;
     messageIdsRef.current.add(key);
     setMessages((prev) => [...prev, msg]);
+    // Track latest createdAt for polling since
+    if (msg?.createdAt) {
+      const ts = new Date(msg.createdAt).getTime();
+      if (!latestRef.current || ts > new Date(latestRef.current).getTime()) latestRef.current = msg.createdAt;
+    }
+    lastSocketAtRef.current = Date.now();
   }
 
   useEffect(() => {
@@ -66,6 +74,7 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
           messageIdsRef.current = ids;
           setMessages(normalized);
           earliestRef.current = normalized[0]?.createdAt || null;
+          latestRef.current = normalized[normalized.length - 1]?.createdAt || null;
         }
       } catch (err) {
         console.error('Error loading messages', err);
@@ -133,6 +142,27 @@ export default function ChatRoom({ roomId, user, triadId = null, promptId = null
       socket.off('typing');
       socket.off('triad_locked');
     };
+  }, [roomId]);
+
+  // Fallback polling if socket is quiet
+  useEffect(() => {
+    let timer;
+    async function poll() {
+      try {
+        const since = latestRef.current ? `&since=${encodeURIComponent(latestRef.current)}` : '';
+        const res = await fetch(`/api/chat/messages?roomId=${roomId}${since}`, { credentials: 'same-origin' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const incoming = Array.isArray(data.messages) ? data.messages : [];
+        for (const m of incoming) appendMessageUnique(m);
+      } catch {}
+    }
+    function tick() {
+      const quietMs = Date.now() - (lastSocketAtRef.current || 0);
+      if (quietMs > 4000) poll();
+    }
+    timer = setInterval(tick, 3000);
+    return () => clearInterval(timer);
   }, [roomId]);
 
   useEffect(() => {
