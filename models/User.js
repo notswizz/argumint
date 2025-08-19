@@ -3,7 +3,7 @@ import mongoose, { Schema } from 'mongoose';
 const UserSchema = new Schema(
   {
     // Traditional auth fields (optional for Farcaster users)
-    email: { type: String, unique: true, sparse: true, index: true },
+    email: { type: String },
     username: { type: String, required: true },
     passwordHash: { type: String },
 
@@ -18,5 +18,8 @@ const UserSchema = new Schema(
   },
   { timestamps: true }
 );
+
+// Ensure only real string emails are unique; allow many docs without email
+UserSchema.index({ email: 1 }, { unique: true, partialFilterExpression: { email: { $type: 'string' } } });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema); 
