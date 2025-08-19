@@ -46,7 +46,6 @@ export default function AppLayout({ children }) {
             ) : (
               <div className="flex items-center gap-3 text-sm">
                 <Link href="/login" className="text-slate-600 hover:text-slate-900">Log in</Link>
-                <Link href="/signup" className="rounded-full bg-brand-600 hover:bg-brand-500 px-3 py-1 text-white">Sign up</Link>
               </div>
             )}
           </div>
