@@ -31,8 +31,13 @@ export default function LoginPage() {
         credentials: 'include',
         body: JSON.stringify({ fid, username, pfpUrl, custodyAddress: null }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to sign in');
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const message = data && (data.error || data.detail)
+          ? [data.error, data.detail].filter(Boolean).join(': ')
+          : `Failed to sign in (${res.status})`;
+        throw new Error(message);
+      }
       window.location.href = '/profile';
     } catch (err) {
       setError(err.message || 'Failed to sign in');
