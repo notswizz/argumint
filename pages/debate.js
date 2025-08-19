@@ -50,7 +50,7 @@ export default function DebatePage() {
     : 'grid grid-cols-1';
 
   return (
-    <div className={`${gridClasses} h-[calc(100dvh-120px)] w-full`}>
+    <div className={`${gridClasses} w-full h-full min-w-0`}>
       {roomsOpen && (
       <aside className="border-r border-slate-200 p-3 space-y-3 lg:block hidden overflow-y-auto max-w-full w-[300px]">
         <input
@@ -84,7 +84,7 @@ export default function DebatePage() {
         </div>
       </aside>
       )}
-      <main className={`p-2 lg:p-2 space-y-2 relative flex flex-col min-h-0 w-full`}>
+      <main className={`p-2 lg:p-2 space-y-2 relative flex flex-col min-h-0 min-w-0 w-full`}>
         <div className="lg:hidden flex items-center justify-between mb-1">
           <button onClick={() => setShowRooms(true)} className="rounded-md bg-slate-200 border border-slate-300 px-3 py-2 text-xs text-slate-800">Debates</button>
           {activeRoom && <div className="text-xs text-slate-500 truncate max-w-[60%]">{activeRoom.name || 'Debate Room'}</div>}
