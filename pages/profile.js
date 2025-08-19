@@ -12,6 +12,7 @@ export default function ProfilePage() {
   const { data: perf } = useSWR(user ? '/api/users/performance' : null, fetcher);
   const { context } = useMiniApp();
   const [miniSdk, setMiniSdk] = useState(null);
+  const [walletAddress, setWalletAddress] = useState(null);
   useEffect(() => {
     let mounted = true;
     import('@farcaster/miniapp-sdk').then((m) => {
@@ -19,6 +20,55 @@ export default function ProfilePage() {
     }).catch(() => {});
     return () => { mounted = false; };
   }, []);
+
+  // Load cached wallet address quickly to avoid zeroing balance on remount
+  useEffect(() => {
+    try {
+      const cached = typeof window !== 'undefined' ? window.localStorage.getItem('walletAddress') : null;
+      if (cached) setWalletAddress(cached);
+    } catch {}
+  }, []);
+
+  // Detect wallet address via Mini App provider or injected provider
+  useEffect(() => {
+    let active = true;
+    async function detect() {
+      try {
+        if (miniSdk && miniSdk.wallet && typeof miniSdk.wallet.getEthereumProvider === 'function') {
+          const provider = await miniSdk.wallet.getEthereumProvider();
+          const accounts = await provider.request({ method: 'eth_accounts' }).catch(() => []);
+          const addr = Array.isArray(accounts) && accounts[0] ? String(accounts[0]) : null;
+          if (active && addr) {
+            setWalletAddress(addr);
+            try { window.localStorage.setItem('walletAddress', addr); } catch {}
+            return;
+          }
+        }
+      } catch {}
+      try {
+        if (typeof window !== 'undefined' && window.ethereum && window.ethereum.request) {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' }).catch(() => []);
+          const addr = Array.isArray(accounts) && accounts[0] ? String(accounts[0]) : null;
+          if (active && addr) {
+            setWalletAddress(addr);
+            try { window.localStorage.setItem('walletAddress', addr); } catch {}
+          }
+        }
+      } catch {}
+    }
+    detect();
+    // Listen for account changes to refresh address
+    function onAccountsChanged(accs) {
+      const addr = Array.isArray(accs) && accs[0] ? String(accs[0]) : null;
+      setWalletAddress(addr);
+      try { if (addr) window.localStorage.setItem('walletAddress', addr); } catch {}
+    }
+    try { if (typeof window !== 'undefined' && window.ethereum && window.ethereum.on) window.ethereum.on('accountsChanged', onAccountsChanged); } catch {}
+    return () => {
+      active = false;
+      try { if (typeof window !== 'undefined' && window.ethereum && window.ethereum.removeListener) window.ethereum.removeListener('accountsChanged', onAccountsChanged); } catch {}
+    };
+  }, [miniSdk]);
   const getFid = () => {
     const fid = context?.user?.fid ?? context?.fid ?? (typeof window !== 'undefined' && window.__FC ? window.__FC.fid : undefined);
     return fid ? String(fid) : undefined;
@@ -28,9 +78,13 @@ export default function ProfilePage() {
     let address;
     try {
       if (miniSdk && miniSdk.wallet && typeof miniSdk.wallet.getEthereumProvider === 'function') {
-        const provider = await miniSdk.wallet.getEthereumProvider();
-        const accounts = await provider.request({ method: 'eth_accounts' }).catch(() => []);
-        address = Array.isArray(accounts) && accounts[0] ? String(accounts[0]) : undefined;
+        // Prefer cached address if available to avoid empty fetches
+        address = walletAddress || undefined;
+        if (!address) {
+          const provider = await miniSdk.wallet.getEthereumProvider();
+          const accounts = await provider.request({ method: 'eth_accounts' }).catch(() => []);
+          address = Array.isArray(accounts) && accounts[0] ? String(accounts[0]) : undefined;
+        }
       }
     } catch {}
     // Fallback to injected provider if available
@@ -43,7 +97,9 @@ export default function ProfilePage() {
     if (address) headers['x-address'] = address;
     return fetch(url, { headers }).then((r) => r.json());
   };
-  const { data: onchain } = useSWR(user ? '/api/token/balance' : null, fidHeaderFetcher);
+  const hasAddress = Boolean(walletAddress || (user && user.custodyAddress));
+  const balanceKey = user && hasAddress ? `/api/token/balance?addr=${encodeURIComponent(walletAddress || user.custodyAddress)}` : null;
+  const { data: onchain } = useSWR(balanceKey, fidHeaderFetcher, { keepPreviousData: true, revalidateOnFocus: false, dedupeInterval: 10000 });
   const [showRecent, setShowRecent] = useState(false);
 
   async function claimOffchainToWallet() {
@@ -118,7 +174,13 @@ export default function ProfilePage() {
       <div className="rounded-xl border border-slate-200 p-3 bg-white">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-slate-200" />
+            {user.profilePictureUrl ? (
+              <img src={user.profilePictureUrl} alt={user.username} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-slate-300 text-slate-700 text-sm flex items-center justify-center border border-slate-200">
+                {(user.username || '?').slice(0, 1).toUpperCase()}
+              </div>
+            )}
             <div>
               <div className="text-base font-semibold leading-tight">{user.username}</div>
               <div className="text-[11px] text-slate-600 leading-tight">{user.email}</div>
