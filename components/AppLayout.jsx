@@ -12,6 +12,14 @@ export default function AppLayout({ children }) {
   const router = useRouter();
   const isHome = router.pathname === '/';
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (_) {}
+    // Force refresh client-side data and redirect to home
+    router.replace('/');
+  };
+
   return (
     <div className="min-h-screen text-slate-800 app-root">
       <MiniAppAutoLogin />
@@ -27,8 +35,13 @@ export default function AppLayout({ children }) {
               <Link href="/profile" className="hover:text-slate-900 text-slate-600">Profile</Link>
             </nav>
             {user ? (
-              <div className="text-xs sm:text-sm text-slate-700 border-gold rounded-full px-3 py-1 inline-block bg-white/60">
-                {user.username}
+              <div className="flex items-center gap-2">
+                <div className="text-xs sm:text-sm text-slate-700 border-gold rounded-full px-3 py-1 inline-block bg-white/60">
+                  {user.username}
+                </div>
+                <button onClick={handleLogout} className="text-xs sm:text-sm text-slate-600 hover:text-slate-900 underline">
+                  Log out
+                </button>
               </div>
             ) : (
               <div className="flex items-center gap-3 text-sm">
