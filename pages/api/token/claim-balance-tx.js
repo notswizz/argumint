@@ -7,11 +7,22 @@ import { getTokenDecimals } from '@/lib/chain';
 import { createWalletClient, http, parseUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { baseSepolia } from 'viem/chains';
+import { connectToDatabase as connect } from '@/lib/db';
+import User from '@/models/User';
+import { getCustodyAddressByFid } from '@/lib/farcaster';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   try {
-    const user = await getUserFromRequest(req);
+    let user = await getUserFromRequest(req);
+    // Accept fid from header in sandboxed Mini App
+    if ((!user || !user.fid) && req.headers['x-fid']) {
+      const fid = Number(req.headers['x-fid']);
+      if (Number.isFinite(fid)) {
+        await connect();
+        user = await User.findOne({ fid });
+      }
+    }
     if (!user?.fid) return res.status(401).json({ error: 'Unauthorized' });
     await connectToDatabase();
 
@@ -32,7 +43,10 @@ export default async function handler(req, res) {
 
     const decimals = await getTokenDecimals();
     const amount = parseUnits(String(offchain), decimals);
-    const to = (user.custodyAddress || '').toLowerCase();
+    let to = (user.custodyAddress || '').toLowerCase();
+    if (!to) {
+      try { to = await getCustodyAddressByFid(user.fid); } catch {}
+    }
     if (!to) return res.status(400).json({ error: 'No custody address linked' });
 
     // Sign EIP-712 authorization

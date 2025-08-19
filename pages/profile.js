@@ -1,5 +1,7 @@
 import useSWR from 'swr';
 import { useState } from 'react';
+import { useMiniApp } from '@neynar/react';
+import { sdk } from '@farcaster/miniapp-sdk';
 import TokenDisplay from '@/components/TokenDisplay';
 
 const fetcher = (url) => fetch(url).then((r) => r.json());
@@ -9,25 +11,45 @@ export default function ProfilePage() {
   const user = data?.user;
   const { data: tx } = useSWR(user ? `/api/tokens/history?userId=${user._id}` : null, fetcher);
   const { data: perf } = useSWR(user ? '/api/users/performance' : null, fetcher);
-  const { data: onchain } = useSWR(user ? '/api/token/balance' : null, fetcher);
+  const { context } = useMiniApp();
+  const fidHeaderFetcher = (url) => fetch(url, { headers: context?.user?.fid ? { 'x-fid': String(context.user.fid) } : undefined }).then((r) => r.json());
+  const { data: onchain } = useSWR(user ? '/api/token/balance' : null, fidHeaderFetcher);
   const [showRecent, setShowRecent] = useState(false);
 
   async function claimOffchainToWallet() {
     try {
       // Build user-signed tx for current off-chain balance
-      const res = await fetch('/api/token/claim-balance-tx', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' });
+      const headers = { 'Content-Type': 'application/json' };
+      if (context?.user?.fid) headers['x-fid'] = String(context.user.fid);
+      const res = await fetch('/api/token/claim-balance-tx', { method: 'POST', headers, credentials: 'include' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Failed to build claim tx');
-      // Submit via injected provider if present
-      if (typeof window !== 'undefined' && window.ethereum && data?.tx) {
-        const txHash = await window.ethereum.request({ method: 'eth_sendTransaction', params: [data.tx] });
+      const txReq = data?.tx;
+      if (!txReq) throw new Error('Missing tx payload');
+      // Prefer Mini App transaction sheet if available
+      if (sdk && sdk.actions && typeof sdk.actions.transaction === 'function') {
+        const resTx = await sdk.actions.transaction({
+          chainId: 84532,
+          to: txReq.to,
+          data: txReq.data,
+          value: txReq.value || '0x0',
+        });
+        const txHash = resTx?.hash || resTx;
+        await fetch('/api/token/zero-offchain', { method: 'POST', credentials: 'include' });
+        console.log('Submitted:', txHash);
+        window.location.reload();
+        return;
+      }
+      // Fallback to injected provider if present
+      if (typeof window !== 'undefined' && window.ethereum) {
+        const txHash = await window.ethereum.request({ method: 'eth_sendTransaction', params: [txReq] });
         // Optimistically zero off-chain after submission
         await fetch('/api/token/zero-offchain', { method: 'POST', credentials: 'include' });
         alert(`Submitted: ${txHash}`);
         window.location.reload();
         return;
       }
-      alert('No wallet provider available in Mini App host');
+      console.error('No Mini App transaction API or wallet provider available');
     } catch (e) {
       alert(e?.message || 'Claim failed');
     }
