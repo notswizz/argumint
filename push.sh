@@ -23,12 +23,12 @@ else
   git commit -m "$msg"
 fi
 
-echo "Pushing to remote (branch: $branch)..."
-if git push; then
-  echo "Push succeeded: $(git remote get-url --push origin) ($branch)"
+echo "Pushing to remote 'main' (branch: $branch)..."
+if git push main "$branch":"$branch"; then
+  echo "Push succeeded: $(git remote get-url --push main) ($branch)"
 else
-  echo "Default push failed. Trying with upstream set to origin/$branch..."
-  git push -u origin "$branch"
+  echo "Default push failed. Trying with upstream set to main/$branch..."
+  git push -u main "$branch"
 fi
 
 echo "Done."
