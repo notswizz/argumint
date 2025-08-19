@@ -36,7 +36,10 @@ export default async function handler(req, res) {
     if (!address) {
       try { address = await getCustodyAddressByFid(user.fid); } catch {}
     }
-    if (!address) return res.status(400).json({ error: 'No custody address for this user' });
+    if (!address) {
+      // Graceful fallback: no connected wallet or custody address; return zeroed values
+      return res.status(200).json({ address: null, balance: '0', decimals: 18, symbol: 'TOKEN', note: 'no wallet address' });
+    }
     const [balance, decimals, symbol] = await Promise.all([
       displayClient.readContract({ address: TOKEN_ADDRESS, abi: tokenAbi, functionName: 'balanceOf', args: [address] }),
       displayClient.readContract({ address: TOKEN_ADDRESS, abi: tokenAbi, functionName: 'decimals' }),
