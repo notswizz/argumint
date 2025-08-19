@@ -4,9 +4,9 @@ import User from '@/models/User';
 import { signJwt } from '@/lib/auth';
 
 const FcAuthSchema = z.object({
-  fid: z.number().int().positive(),
-  username: z.string().min(1),
-  pfpUrl: z.string().url().optional().nullable(),
+  fid: z.coerce.number().int().positive(),
+  username: z.string().optional().nullable(),
+  pfpUrl: z.string().optional().nullable(),
   custodyAddress: z.string().optional().nullable(),
 });
 
@@ -18,35 +18,31 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid input' });
     }
     const { fid, username, pfpUrl, custodyAddress } = parsed.data;
+
+    const canonicalUsername = (username && String(username).trim().length > 0)
+      ? String(username).trim()
+      : `fid-${fid}`;
+    const safePfpUrl = pfpUrl && /^https?:\/\//i.test(String(pfpUrl)) ? String(pfpUrl) : undefined;
+    const safeCustody = custodyAddress && String(custodyAddress).trim().length > 0 ? String(custodyAddress) : undefined;
+
     await connectToDatabase();
 
-    let user = await User.findOne({ fid });
-    if (!user) {
-      user = await User.create({
-        fid,
-        username,
-        fcUsername: username,
-        profilePictureUrl: pfpUrl || undefined,
-        custodyAddress: custodyAddress || undefined,
-        roles: ['user'],
-      });
-    } else {
-      const updates = {};
-      if (username && user.username !== username) {
-        updates.username = username;
-        updates.fcUsername = username;
-      }
-      if (pfpUrl && user.profilePictureUrl !== pfpUrl) {
-        updates.profilePictureUrl = pfpUrl;
-      }
-      if (custodyAddress && user.custodyAddress !== custodyAddress) {
-        updates.custodyAddress = custodyAddress;
-      }
-      if (Object.keys(updates).length) {
-        await User.updateOne({ _id: user._id }, { $set: updates });
-        user = await User.findById(user._id);
-      }
-    }
+    const user = await User.findOneAndUpdate(
+      { fid },
+      {
+        $setOnInsert: {
+          fid,
+          username: canonicalUsername,
+          fcUsername: canonicalUsername,
+          roles: ['user'],
+        },
+        $set: {
+          ...(safePfpUrl ? { profilePictureUrl: safePfpUrl } : {}),
+          ...(safeCustody ? { custodyAddress: safeCustody } : {}),
+        },
+      },
+      { upsert: true, new: true }
+    );
 
     const token = signJwt({ _id: user._id, fid: user.fid, username: user.username });
     res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; Max-Age=604800; SameSite=None; Secure`);
