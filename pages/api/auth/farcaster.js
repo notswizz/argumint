@@ -49,6 +49,34 @@ export default async function handler(req, res) {
     } catch (err) {
       // Fallback: if upsert fails (e.g., transient/dup key race), ensure user exists
       console.error('Farcaster upsert error:', err?.message || err);
+      // Auto-repair duplicate key on email:null by unsetting null emails and fixing index
+      if (err && err.code === 11000 && /email_1/.test(String(err.message))) {
+        try {
+          await User.updateMany({ email: null }, { $unset: { email: "" } });
+          try { await User.collection.dropIndex('email_1'); } catch (_) {}
+          try { await User.collection.dropIndex('email_1_sparse'); } catch (_) {}
+          await User.collection.createIndex({ email: 1 }, { unique: true, partialFilterExpression: { email: { $type: 'string' } } });
+          // Retry upsert after repair
+          user = await User.findOneAndUpdate(
+            { fid },
+            {
+              $setOnInsert: {
+                fid,
+                username: canonicalUsername,
+                fcUsername: canonicalUsername,
+                roles: ['user'],
+              },
+              $set: {
+                ...(safePfpUrl ? { profilePictureUrl: safePfpUrl } : {}),
+                ...(safeCustody ? { custodyAddress: safeCustody } : {}),
+              },
+            },
+            { upsert: true, new: true }
+          );
+        } catch (repairErr) {
+          console.error('Email index repair failed:', repairErr?.message || repairErr);
+        }
+      }
       user = await User.findOne({ fid });
       if (!user) {
         user = await User.create({
