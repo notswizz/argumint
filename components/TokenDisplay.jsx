@@ -1,9 +1,16 @@
-export default function TokenDisplay({ tokens = 0, history = [] }) {
+export default function TokenDisplay({ tokens = 0, history = [], onchain = null }) {
+  const onchainText = onchain
+    ? `${onchain.symbol || 'TOKEN'} ${Number(onchain.balance || 0n) / 10 ** (onchain.decimals || 18)}`
+    : null;
+
   return (
     <div>
       <div className="flex items-center justify-between">
-        <div className="text-sm text-slate-600">Balance</div>
+        <div className="text-sm text-slate-600">Off‑chain balance</div>
         <div className="text-2xl font-bold">{tokens}</div>
+      </div>
+      <div className="mt-1 text-xs text-slate-500">
+        On‑chain in wallet: {onchainText ?? '—'}
       </div>
       {history.length > 0 && (
         <ul className="mt-3 space-y-2 max-h-40 overflow-y-auto text-sm pr-2">

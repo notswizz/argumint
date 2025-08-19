@@ -8,6 +8,28 @@ export default function ProfilePage() {
   const user = data?.user;
   const { data: tx } = useSWR(user ? `/api/tokens/history?userId=${user._id}` : null, fetcher);
   const { data: perf } = useSWR(user ? '/api/users/performance' : null, fetcher);
+  const { data: onchain } = useSWR(user ? '/api/token/balance' : null, fetcher);
+
+  async function claimOffchainToWallet() {
+    try {
+      // Build user-signed tx for current off-chain balance
+      const res = await fetch('/api/token/claim-balance-tx', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Failed to build claim tx');
+      // Submit via injected provider if present
+      if (typeof window !== 'undefined' && window.ethereum && data?.tx) {
+        const txHash = await window.ethereum.request({ method: 'eth_sendTransaction', params: [data.tx] });
+        // Optimistically zero off-chain after submission
+        await fetch('/api/token/zero-offchain', { method: 'POST', credentials: 'include' });
+        alert(`Submitted: ${txHash}`);
+        window.location.reload();
+        return;
+      }
+      alert('No wallet provider available in Mini App host');
+    } catch (e) {
+      alert(e?.message || 'Claim failed');
+    }
+  }
 
   if (!user) return <div className="p-4">Please log in.</div>;
 
@@ -45,7 +67,12 @@ export default function ProfilePage() {
         </div>
         <div className="rounded-xl border border-slate-200 p-4 bg-white">
           <div className="text-xs uppercase tracking-wide text-slate-500 mb-2">Tokens</div>
-          <TokenDisplay tokens={user.tokens} history={tx?.history || []} />
+          <div className="flex items-center justify-between">
+            <TokenDisplay tokens={user.tokens} history={tx?.history || []} onchain={onchain} />
+            <div className="text-right">
+              <button onClick={claimOffchainToWallet} className="mt-2 px-3 py-1.5 bg-emerald-600 text-white rounded-md text-sm">Claim to wallet</button>
+            </div>
+          </div>
         </div>
       </div>
 
