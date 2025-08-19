@@ -16,9 +16,19 @@ export default function ProfilePage() {
     const fid = context?.user?.fid ?? context?.fid ?? (typeof window !== 'undefined' && window.__FC ? window.__FC.fid : undefined);
     return fid ? String(fid) : undefined;
   };
-  const fidHeaderFetcher = (url) => {
+  const fidHeaderFetcher = async (url) => {
     const fid = getFid();
-    const headers = fid ? { 'x-fid': fid } : undefined;
+    let address;
+    try {
+      if (sdk && sdk.wallet && typeof sdk.wallet.getEthereumProvider === 'function') {
+        const provider = await sdk.wallet.getEthereumProvider();
+        const accounts = await provider.request({ method: 'eth_accounts' }).catch(() => []);
+        address = Array.isArray(accounts) && accounts[0] ? String(accounts[0]) : undefined;
+      }
+    } catch {}
+    const headers = {};
+    if (fid) headers['x-fid'] = fid;
+    if (address) headers['x-address'] = address;
     return fetch(url, { headers }).then((r) => r.json());
   };
   const { data: onchain } = useSWR(user ? '/api/token/balance' : null, fidHeaderFetcher);
@@ -30,6 +40,15 @@ export default function ProfilePage() {
       const headers = { 'Content-Type': 'application/json' };
       const fid = getFid();
       if (fid) headers['x-fid'] = fid;
+      // Attach wallet address if available
+      try {
+        if (sdk && sdk.wallet && typeof sdk.wallet.getEthereumProvider === 'function') {
+          const provider = await sdk.wallet.getEthereumProvider();
+          const accounts = await provider.request({ method: 'eth_accounts' }).catch(() => []);
+          const address = Array.isArray(accounts) && accounts[0] ? String(accounts[0]) : undefined;
+          if (address) headers['x-address'] = address;
+        }
+      } catch {}
       const res = await fetch('/api/token/claim-balance-tx', { method: 'POST', headers, credentials: 'include' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Failed to build claim tx');

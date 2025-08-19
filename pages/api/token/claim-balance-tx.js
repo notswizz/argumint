@@ -14,6 +14,9 @@ import { getCustodyAddressByFid } from '@/lib/farcaster';
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   try {
+    // Allow explicit wallet address via header for Mini App
+    let explicitAddress = req.headers['x-address'] ? String(req.headers['x-address']).trim() : '';
+
     let user = await getUserFromRequest(req);
     // Accept fid from header in sandboxed Mini App
     if ((!user || !user.fid) && req.headers['x-fid']) {
@@ -23,7 +26,7 @@ export default async function handler(req, res) {
         user = await User.findOne({ fid });
       }
     }
-    if (!user?.fid) return res.status(401).json({ error: 'Unauthorized' });
+    if (!user?.fid && !explicitAddress) return res.status(401).json({ error: 'Unauthorized' });
     await connectToDatabase();
 
     const CLAIM_CONTRACT = process.env.ARG_CLAIM_CONTRACT_ADDRESS;
@@ -43,7 +46,7 @@ export default async function handler(req, res) {
 
     const decimals = await getTokenDecimals();
     const amount = parseUnits(String(offchain), decimals);
-    let to = (user.custodyAddress || '').toLowerCase();
+    let to = (explicitAddress || user?.custodyAddress || '').toLowerCase();
     if (!to) {
       try { to = await getCustodyAddressByFid(user.fid); } catch {}
     }
@@ -59,13 +62,13 @@ export default async function handler(req, res) {
         { name: 'nonce', type: 'uint256' },
       ]},
       primaryType: 'Claim',
-      message: { recipient: to, amount, fid: Number(user.fid), nonce },
+      message: { recipient: to, amount, fid: Number(user?.fid || 0), nonce },
     });
 
     const tx = await formatClaimTransaction({ to, amount, decimals, fid: user.fid, nonce, signature, claimContract: CLAIM_CONTRACT });
 
     // Record intent with this nonce
-    await OnchainMint.create({ fid: user.fid, toAddress: to, amountTokens: offchain, nonce, reason: 'first_claim', status: 'pending' });
+    await OnchainMint.create({ fid: user?.fid || 0, toAddress: to, amountTokens: offchain, nonce, reason: 'first_claim', status: 'pending' });
 
     return res.status(200).json({ tx, meta: { nonce } });
   } catch (e) {

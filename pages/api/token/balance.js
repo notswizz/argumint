@@ -7,6 +7,14 @@ import { getCustodyAddressByFid } from '@/lib/farcaster';
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
   try {
+    // Allow explicit wallet address via query/header for Mini App
+    let overrideAddress = req.query.address || req.headers['x-address'];
+    if (overrideAddress && typeof overrideAddress === 'string') {
+      overrideAddress = overrideAddress.trim();
+    } else {
+      overrideAddress = undefined;
+    }
+
     let user = await getUserFromRequest(req);
     // Fallback: accept fid via header for Mini App sandbox where cookies may be blocked
     if ((!user || !user.fid) && req.headers['x-fid']) {
@@ -16,8 +24,8 @@ export default async function handler(req, res) {
         user = await User.findOne({ fid });
       }
     }
-    if (!user || !user.fid) return res.status(401).json({ error: 'Unauthorized' });
-    let address = user.custodyAddress;
+    if (!user && !overrideAddress) return res.status(401).json({ error: 'Unauthorized' });
+    let address = overrideAddress || (user ? user.custodyAddress : '');
     if (!address) {
       try { address = await getCustodyAddressByFid(user.fid); } catch {}
     }
