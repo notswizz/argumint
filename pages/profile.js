@@ -12,7 +12,15 @@ export default function ProfilePage() {
   const { data: tx } = useSWR(user ? `/api/tokens/history?userId=${user._id}` : null, fetcher);
   const { data: perf } = useSWR(user ? '/api/users/performance' : null, fetcher);
   const { context } = useMiniApp();
-  const fidHeaderFetcher = (url) => fetch(url, { headers: context?.user?.fid ? { 'x-fid': String(context.user.fid) } : undefined }).then((r) => r.json());
+  const getFid = () => {
+    const fid = context?.user?.fid ?? context?.fid ?? (typeof window !== 'undefined' && window.__FC ? window.__FC.fid : undefined);
+    return fid ? String(fid) : undefined;
+  };
+  const fidHeaderFetcher = (url) => {
+    const fid = getFid();
+    const headers = fid ? { 'x-fid': fid } : undefined;
+    return fetch(url, { headers }).then((r) => r.json());
+  };
   const { data: onchain } = useSWR(user ? '/api/token/balance' : null, fidHeaderFetcher);
   const [showRecent, setShowRecent] = useState(false);
 
@@ -20,7 +28,8 @@ export default function ProfilePage() {
     try {
       // Build user-signed tx for current off-chain balance
       const headers = { 'Content-Type': 'application/json' };
-      if (context?.user?.fid) headers['x-fid'] = String(context.user.fid);
+      const fid = getFid();
+      if (fid) headers['x-fid'] = fid;
       const res = await fetch('/api/token/claim-balance-tx', { method: 'POST', headers, credentials: 'include' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Failed to build claim tx');
@@ -39,6 +48,17 @@ export default function ProfilePage() {
         console.log('Submitted:', txHash);
         window.location.reload();
         return;
+      }
+      // Next best: Mini App Ethereum provider per docs
+      if (sdk && sdk.wallet && typeof sdk.wallet.getEthereumProvider === 'function') {
+        const provider = await sdk.wallet.getEthereumProvider();
+        if (provider && provider.request) {
+          const txHash = await provider.request({ method: 'eth_sendTransaction', params: [txReq] });
+          await fetch('/api/token/zero-offchain', { method: 'POST', credentials: 'include' });
+          console.log('Submitted:', txHash);
+          window.location.reload();
+          return;
+        }
       }
       // Fallback to injected provider if present
       if (typeof window !== 'undefined' && window.ethereum) {
