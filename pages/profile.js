@@ -28,11 +28,16 @@ export default function ProfilePage() {
     let address;
     try {
       if (miniSdk && miniSdk.wallet && typeof miniSdk.wallet.getEthereumProvider === 'function') {
-        const provider = await sdk.wallet.getEthereumProvider();
+        const provider = await miniSdk.wallet.getEthereumProvider();
         const accounts = await provider.request({ method: 'eth_accounts' }).catch(() => []);
         address = Array.isArray(accounts) && accounts[0] ? String(accounts[0]) : undefined;
       }
     } catch {}
+    // Fallback to injected provider if available
+    if (!address && typeof window !== 'undefined' && window.ethereum && window.ethereum.request) {
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' }).catch(() => []);
+      address = Array.isArray(accounts) && accounts[0] ? String(accounts[0]) : undefined;
+    }
     const headers = {};
     if (fid) headers['x-fid'] = fid;
     if (address) headers['x-address'] = address;
