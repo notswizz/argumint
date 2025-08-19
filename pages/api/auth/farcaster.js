@@ -15,7 +15,8 @@ export default async function handler(req, res) {
   try {
     const parsed = FcAuthSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid input' });
+      const issues = parsed.error.issues?.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
+      return res.status(400).json({ error: 'Invalid input', detail: issues || undefined });
     }
     const { fid, username, pfpUrl, custodyAddress } = parsed.data;
 
@@ -27,27 +28,45 @@ export default async function handler(req, res) {
 
     await connectToDatabase();
 
-    const user = await User.findOneAndUpdate(
-      { fid },
-      {
-        $setOnInsert: {
+    let user;
+    try {
+      user = await User.findOneAndUpdate(
+        { fid },
+        {
+          $setOnInsert: {
+            fid,
+            username: canonicalUsername,
+            fcUsername: canonicalUsername,
+            roles: ['user'],
+          },
+          $set: {
+            ...(safePfpUrl ? { profilePictureUrl: safePfpUrl } : {}),
+            ...(safeCustody ? { custodyAddress: safeCustody } : {}),
+          },
+        },
+        { upsert: true, new: true }
+      );
+    } catch (err) {
+      // Fallback: if upsert fails (e.g., transient/dup key race), ensure user exists
+      console.error('Farcaster upsert error:', err?.message || err);
+      user = await User.findOne({ fid });
+      if (!user) {
+        user = await User.create({
           fid,
           username: canonicalUsername,
           fcUsername: canonicalUsername,
+          profilePictureUrl: safePfpUrl,
+          custodyAddress: safeCustody,
           roles: ['user'],
-        },
-        $set: {
-          ...(safePfpUrl ? { profilePictureUrl: safePfpUrl } : {}),
-          ...(safeCustody ? { custodyAddress: safeCustody } : {}),
-        },
-      },
-      { upsert: true, new: true }
-    );
+        });
+      }
+    }
 
     const token = signJwt({ _id: user._id, fid: user.fid, username: user.username });
     res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; Max-Age=604800; SameSite=None; Secure`);
     return res.status(200).json({ user: { _id: user._id, fid: user.fid, username: user.username, tokens: user.tokens } });
   } catch (e) {
+    console.error('Farcaster auth error:', e);
     return res.status(500).json({ error: 'Server error', detail: e?.message || 'unknown' });
   }
 }

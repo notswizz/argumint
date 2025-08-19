@@ -4,7 +4,7 @@
     "name": "ArguMint",
     "iconUrl": "https://argumint7.vercel.app/icon.jpeg",
     "homeUrl": "https://argumint7.vercel.app/",
-    "imageUrl": "https://argumint7.vercel.app/opengraph-image",
+    "imageUrl": "https://argumint7.vercel.app/icon.jpeg",
     "buttonTitle": "Open",
     "splashImageUrl": "https://argumint7.vercel.app/icon.jpeg",
     "splashBackgroundColor": "#ffffff"
