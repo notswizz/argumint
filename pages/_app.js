@@ -2,7 +2,9 @@ import "@/styles/globals.css";
 
 import AppLayout from '@/components/AppLayout';
 import { useEffect } from 'react';
-import { MiniAppProvider } from '@neynar/react';
+import dynamic from 'next/dynamic';
+
+const ClientMiniProvider = dynamic(() => import('@/components/ClientMiniProvider'), { ssr: false });
 
 export default function App({ Component, pageProps }) {
   useEffect(() => {
@@ -12,10 +14,10 @@ export default function App({ Component, pageProps }) {
     return () => clearInterval(id);
   }, []);
   return (
-    <MiniAppProvider analyticsEnabled={true}>
+    <ClientMiniProvider>
       <AppLayout>
         <Component {...pageProps} />
       </AppLayout>
-    </MiniAppProvider>
+    </ClientMiniProvider>
   );
 }

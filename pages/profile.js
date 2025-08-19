@@ -1,7 +1,6 @@
 import useSWR from 'swr';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMiniApp } from '@neynar/react';
-import { sdk } from '@farcaster/miniapp-sdk';
 import TokenDisplay from '@/components/TokenDisplay';
 
 const fetcher = (url) => fetch(url).then((r) => r.json());
@@ -12,6 +11,14 @@ export default function ProfilePage() {
   const { data: tx } = useSWR(user ? `/api/tokens/history?userId=${user._id}` : null, fetcher);
   const { data: perf } = useSWR(user ? '/api/users/performance' : null, fetcher);
   const { context } = useMiniApp();
+  const [miniSdk, setMiniSdk] = useState(null);
+  useEffect(() => {
+    let mounted = true;
+    import('@farcaster/miniapp-sdk').then((m) => {
+      if (mounted) setMiniSdk(m?.sdk || null);
+    }).catch(() => {});
+    return () => { mounted = false; };
+  }, []);
   const getFid = () => {
     const fid = context?.user?.fid ?? context?.fid ?? (typeof window !== 'undefined' && window.__FC ? window.__FC.fid : undefined);
     return fid ? String(fid) : undefined;
@@ -20,7 +27,7 @@ export default function ProfilePage() {
     const fid = getFid();
     let address;
     try {
-      if (sdk && sdk.wallet && typeof sdk.wallet.getEthereumProvider === 'function') {
+      if (miniSdk && miniSdk.wallet && typeof miniSdk.wallet.getEthereumProvider === 'function') {
         const provider = await sdk.wallet.getEthereumProvider();
         const accounts = await provider.request({ method: 'eth_accounts' }).catch(() => []);
         address = Array.isArray(accounts) && accounts[0] ? String(accounts[0]) : undefined;
@@ -42,8 +49,8 @@ export default function ProfilePage() {
       if (fid) headers['x-fid'] = fid;
       // Attach wallet address if available
       try {
-        if (sdk && sdk.wallet && typeof sdk.wallet.getEthereumProvider === 'function') {
-          const provider = await sdk.wallet.getEthereumProvider();
+        if (miniSdk && miniSdk.wallet && typeof miniSdk.wallet.getEthereumProvider === 'function') {
+          const provider = await miniSdk.wallet.getEthereumProvider();
           const accounts = await provider.request({ method: 'eth_accounts' }).catch(() => []);
           const address = Array.isArray(accounts) && accounts[0] ? String(accounts[0]) : undefined;
           if (address) headers['x-address'] = address;
@@ -55,8 +62,8 @@ export default function ProfilePage() {
       const txReq = data?.tx;
       if (!txReq) throw new Error('Missing tx payload');
       // Prefer Mini App transaction sheet if available
-      if (sdk && sdk.actions && typeof sdk.actions.transaction === 'function') {
-        const resTx = await sdk.actions.transaction({
+      if (miniSdk && miniSdk.actions && typeof miniSdk.actions.transaction === 'function') {
+        const resTx = await miniSdk.actions.transaction({
           chainId: 84532,
           to: txReq.to,
           data: txReq.data,
@@ -69,10 +76,15 @@ export default function ProfilePage() {
         return;
       }
       // Next best: Mini App Ethereum provider per docs
-      if (sdk && sdk.wallet && typeof sdk.wallet.getEthereumProvider === 'function') {
-        const provider = await sdk.wallet.getEthereumProvider();
+      if (miniSdk && miniSdk.wallet && typeof miniSdk.wallet.getEthereumProvider === 'function') {
+        const provider = await miniSdk.wallet.getEthereumProvider();
         if (provider && provider.request) {
-          const txHash = await provider.request({ method: 'eth_sendTransaction', params: [txReq] });
+          const accounts = await provider.request({ method: 'eth_requestAccounts' }).catch(() => []);
+          const from = Array.isArray(accounts) && accounts[0] ? String(accounts[0]) : undefined;
+          // Ensure chain is Base Sepolia (0x14a34)
+          try { await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x14a34' }] }); } catch (_) {}
+          const txParams = { from, to: txReq.to, data: txReq.data, value: txReq.value || '0x0' };
+          const txHash = await provider.request({ method: 'eth_sendTransaction', params: [txParams] });
           await fetch('/api/token/zero-offchain', { method: 'POST', credentials: 'include' });
           console.log('Submitted:', txHash);
           window.location.reload();

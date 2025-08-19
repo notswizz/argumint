@@ -6,7 +6,7 @@ import OnchainMint from '@/models/OnchainMint';
 import { getTokenDecimals } from '@/lib/chain';
 import { createWalletClient, http, parseUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { baseSepolia } from 'viem/chains';
+import { base, baseSepolia } from 'viem/chains';
 import { connectToDatabase as connect } from '@/lib/db';
 import User from '@/models/User';
 import { getCustodyAddressByFid } from '@/lib/farcaster';
@@ -41,8 +41,10 @@ export default async function handler(req, res) {
     const claimsCount = await OnchainMint.countDocuments({ fid: user.fid });
     const nonce = claimsCount; // 0-based monotonic
 
+    const CHAIN_ID = Number(process.env.CHAIN_ID || process.env.NEXT_PUBLIC_CHAIN_ID || 84532);
+    const CHAIN = CHAIN_ID === 8453 ? base : baseSepolia;
     const account = privateKeyToAccount(signerPk.startsWith('0x') ? signerPk : `0x${signerPk}`);
-    const wallet = createWalletClient({ account, chain: baseSepolia, transport: http(process.env.BASE_RPC_URL || 'https://sepolia.base.org') });
+    const wallet = createWalletClient({ account, chain: CHAIN, transport: http(process.env.BASE_RPC_URL || (CHAIN_ID === 8453 ? 'https://mainnet.base.org' : 'https://sepolia.base.org')) });
 
     const decimals = await getTokenDecimals();
     const amount = parseUnits(String(offchain), decimals);
@@ -54,7 +56,7 @@ export default async function handler(req, res) {
 
     // Sign EIP-712 authorization
     const signature = await wallet.signTypedData({
-      domain: { name: 'ArgumintClaim', version: '1', chainId: baseSepolia.id, verifyingContract: CLAIM_CONTRACT },
+      domain: { name: 'ArgumintClaim', version: '1', chainId: CHAIN.id, verifyingContract: CLAIM_CONTRACT },
       types: { Claim: [
         { name: 'recipient', type: 'address' },
         { name: 'amount', type: 'uint256' },

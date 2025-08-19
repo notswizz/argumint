@@ -10,9 +10,10 @@
     "broker": "node server/socket-broker.js"
   },
   "dependencies": {
+    "@farcaster/auth-kit": "^0.8.1",
+    "@farcaster/miniapp-sdk": "^0.1.9",
     "@neynar/nodejs-sdk": "^2.0.10",
     "@neynar/react": "^1.2.8",
-    "@farcaster/miniapp-sdk": "^0.1.9",
     "bcryptjs": "^3.0.2",
     "cookie": "^1.0.2",
     "csv-stringify": "^6.6.0",
@@ -22,11 +23,11 @@
     "openai": "^5.12.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "viem": "^2.18.8",
     "sentiment": "^5.0.2",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "swr": "^2.3.6",
+    "viem": "^2.18.8",
     "zod": "^3.25.76"
   },
   "devDependencies": {
