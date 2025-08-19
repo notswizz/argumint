@@ -1,4 +1,6 @@
-import { publicClient, tokenAbi, TOKEN_ADDRESS } from '@/lib/chain';
+import { tokenAbi, TOKEN_ADDRESS } from '@/lib/chain';
+import { createPublicClient, http } from 'viem';
+import { baseSepolia } from 'viem/chains';
 import { getUserFromRequest } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/db';
 import User from '@/models/User';
@@ -7,6 +9,11 @@ import { getCustodyAddressByFid } from '@/lib/farcaster';
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
   try {
+    // Always query balances on Base Sepolia for display
+    const displayClient = createPublicClient({
+      chain: baseSepolia,
+      transport: http(process.env.BASE_RPC_URL || 'https://sepolia.base.org')
+    });
     // Allow explicit wallet address via query/header for Mini App
     let overrideAddress = req.query.address || req.headers['x-address'];
     if (overrideAddress && typeof overrideAddress === 'string') {
@@ -31,9 +38,9 @@ export default async function handler(req, res) {
     }
     if (!address) return res.status(400).json({ error: 'No custody address for this user' });
     const [balance, decimals, symbol] = await Promise.all([
-      publicClient.readContract({ address: TOKEN_ADDRESS, abi: tokenAbi, functionName: 'balanceOf', args: [address] }),
-      publicClient.readContract({ address: TOKEN_ADDRESS, abi: tokenAbi, functionName: 'decimals' }),
-      publicClient.readContract({ address: TOKEN_ADDRESS, abi: tokenAbi, functionName: 'symbol' }).catch(() => 'TOKEN'),
+      displayClient.readContract({ address: TOKEN_ADDRESS, abi: tokenAbi, functionName: 'balanceOf', args: [address] }),
+      displayClient.readContract({ address: TOKEN_ADDRESS, abi: tokenAbi, functionName: 'decimals' }),
+      displayClient.readContract({ address: TOKEN_ADDRESS, abi: tokenAbi, functionName: 'symbol' }).catch(() => 'TOKEN'),
     ]);
     return res.status(200).json({ address, balance: balance?.toString?.() || '0', decimals: Number(decimals) || 18, symbol });
   } catch (e) {
