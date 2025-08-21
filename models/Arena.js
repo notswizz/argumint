@@ -11,7 +11,8 @@ const InterviewTurnSchema = new Schema(
 
 const ArenaTakeSchema = new Schema(
   {
-    ownerId: { type: Schema.Types.ObjectId, ref: 'User', index: true, required: true },
+    ownerId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
+    guestKey: { type: String, index: true },
     statement: { type: String, required: true },
     status: { type: String, enum: ['draft', 'interviewing', 'trained'], default: 'draft' },
     interview: { type: [InterviewTurnSchema], default: [] },
@@ -38,10 +39,27 @@ const ArenaTakeSchema = new Schema(
       default: undefined,
     },
     agentPrompt: { type: String, default: '' },
+    debateResult: {
+      type: new Schema(
+        {
+          aiScore: { type: Number, required: true },
+          opponentScore: { type: Number, required: true },
+          winner: { type: String, enum: ['ai', 'opponent'], required: true },
+          reasoning: { type: String, required: true },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+    },
   },
   { timestamps: true }
 );
 
-export const ArenaTake = mongoose.models.ArenaTake || mongoose.model('ArenaTake', ArenaTakeSchema);
+// Remove any existing model to avoid conflicts
+if (mongoose.models.ArenaTake) {
+  delete mongoose.models.ArenaTake;
+}
+
+export const ArenaTake = mongoose.model('ArenaTake', ArenaTakeSchema);
 
 

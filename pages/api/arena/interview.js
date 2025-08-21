@@ -6,12 +6,17 @@ import OpenAI from 'openai';
 
 export default async function handler(req, res) {
   const user = await getUserFromRequest(req);
-  if (!user) return res.status(401).end();
   await connectToDatabase();
 
   const { takeId } = req.body || req.query || {};
   if (!takeId) return res.status(400).json({ error: 'Missing takeId' });
-  const take = await ArenaTake.findOne({ _id: takeId, ownerId: user._id });
+  let take = null;
+  if (user) {
+    take = await ArenaTake.findOne({ _id: takeId, ownerId: user._id });
+  } else {
+    const guestKey = req.cookies?.arena_guest || null;
+    if (guestKey) take = await ArenaTake.findOne({ _id: takeId, guestKey });
+  }
   if (!take) return res.status(404).json({ error: 'Not found' });
 
   if (req.method === 'GET') {

@@ -11,6 +11,7 @@ export default function AppLayout({ children }) {
   const user = me?.user;
   const router = useRouter();
   const isHome = router.pathname === '/';
+  const isArena = router.pathname === '/arena';
 
   const handleLogout = async () => {
     try {
@@ -50,7 +51,7 @@ export default function AppLayout({ children }) {
           </div>
         </div>
       </header>
-      <main className={`mx-auto max-w-none sm:max-w-6xl px-3 sm:px-4 py-3 sm:py-6 pb-28 sm:pb-6 app-main ${isHome ? 'app-main-scroll' : ''}`}>{children}</main>
+      <main className={`mx-auto max-w-none sm:max-w-6xl px-3 sm:px-4 py-3 sm:py-6 pb-28 sm:pb-6 app-main ${(isHome || isArena) ? 'app-main-scroll' : ''}`}>{children}</main>
       <nav className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200/80 bg-white/85 backdrop-blur" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
         <div className="mx-auto max-w-none px-3 py-2 grid grid-cols-3 text-sm text-slate-600">
           <Link href="/arena" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">

@@ -8,13 +8,18 @@ const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
 
 export default async function handler(req, res) {
   const user = await getUserFromRequest(req);
-  if (!user) return res.status(401).end();
   if (req.method !== 'POST') return res.status(405).end();
   await connectToDatabase();
 
   const { takeId } = req.body || {};
   if (!takeId) return res.status(400).json({ error: 'Missing takeId' });
-  const take = await ArenaTake.findOne({ _id: takeId, ownerId: user._id });
+  let take = null;
+  if (user) {
+    take = await ArenaTake.findOne({ _id: takeId, ownerId: user._id });
+  } else {
+    const guestKey = req.cookies?.arena_guest || null;
+    if (guestKey) take = await ArenaTake.findOne({ _id: takeId, guestKey });
+  }
   if (!take) return res.status(404).json({ error: 'Not found' });
   if (!Array.isArray(take.interview) || take.interview.length < 1) return res.status(400).json({ error: 'Interview is empty' });
 
@@ -45,21 +50,22 @@ export default async function handler(req, res) {
     take.profile = profile;
     // Build an agent system prompt for later use in debates
     const agent = [
-      'You argue on behalf of a specific user. Stay faithful to their position.',
-      `Claim: ${profile.claim || take.statement}`,
-      profile.definitions ? `Definitions: ${JSON.stringify(profile.definitions)}` : '',
-      profile.premises?.length ? `Premises: ${profile.premises.join('; ')}` : '',
-      profile.evidence?.length ? `Evidence: ${profile.evidence.join('; ')}` : '',
-      profile.counterarguments?.length ? `Common counters: ${profile.counterarguments.join('; ')}` : '',
-      profile.responses?.length ? `Responses to counters: ${profile.responses.join('; ')}` : '',
-      profile.assumptions?.length ? `Assumptions: ${profile.assumptions.join('; ')}` : '',
-      profile.edge_cases?.length ? `Edge cases: ${profile.edge_cases.join('; ')}` : '',
+      'You are a conversational AI that argues on behalf of a specific user. Stay focused and concise.',
+      'IMPORTANT: Only use the knowledge and arguments you were trained on. Do not make up new facts or arguments.',
+      `Your core position: ${profile.claim || take.statement}`,
+      profile.definitions ? `Key definitions: ${JSON.stringify(profile.definitions)}` : '',
+      profile.premises?.length ? `Your premises: ${profile.premises.join('; ')}` : '',
+      profile.evidence?.length ? `Your evidence: ${profile.evidence.join('; ')}` : '',
+      profile.counterarguments?.length ? `Common counters you know: ${profile.counterarguments.join('; ')}` : '',
+      profile.responses?.length ? `Your responses to counters: ${profile.responses.join('; ')}` : '',
+      profile.assumptions?.length ? `Your assumptions: ${profile.assumptions.join('; ')}` : '',
+      profile.edge_cases?.length ? `Edge cases you considered: ${profile.edge_cases.join('; ')}` : '',
       profile.scope_limits?.length ? `Scope limits: ${profile.scope_limits.join('; ')}` : '',
       profile.tone ? `Tone: ${profile.tone}` : '',
       profile.style ? `Style: ${profile.style}` : '',
-      profile.target_audience ? `Audience: ${profile.target_audience}` : '',
-      profile.confidence ? `Confidence: ${profile.confidence}` : '',
-      'Debate instructions: Be persuasive, cite evidence, handle counters respectfully, and remain consistent with the above profile.'
+      profile.target_audience ? `Target audience: ${profile.target_audience}` : '',
+      profile.confidence ? `Confidence level: ${profile.confidence}` : '',
+      'Debate style: Be conversational, concise (1-3 sentences max), and only use the above knowledge. If asked about something not covered, say "I wasn\'t trained on that specific point." Stay true to your position.'
     ].filter(Boolean).join('\n');
     take.agentPrompt = agent;
     take.status = 'trained';
