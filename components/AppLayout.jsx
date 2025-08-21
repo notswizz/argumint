@@ -31,8 +31,6 @@ export default function AppLayout({ children }) {
           <div className="flex items-center gap-4">
             <nav className="hidden sm:flex items-center gap-4 text-sm">
               <Link href="/arena" className="hover:text-slate-900 text-slate-600">Arena</Link>
-              <Link href="/prompt" className="hover:text-slate-900 text-slate-600">Prompt</Link>
-              <Link href="/debate" className="hover:text-slate-900 text-slate-600">Debate</Link>
               <Link href="/profile" className="hover:text-slate-900 text-slate-600">Profile</Link>
             </nav>
             {user ? (
@@ -59,13 +57,9 @@ export default function AppLayout({ children }) {
             <Image src="/globe.svg" alt="Arena" width={22} height={22} />
             <span>Arena</span>
           </Link>
-          <Link href="/prompt" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
-            <Image src="/file.svg" alt="Prompt" width={22} height={22} />
-            <span>Prompt</span>
-          </Link>
-          <Link href="/debate" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
-            <Image src="/globe.svg" alt="Debate" width={22} height={22} />
-            <span>Debate</span>
+          <Link href="/profile" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
+            <Image src="/window.svg" alt="Profile" width={22} height={22} />
+            <span>Profile</span>
           </Link>
           <Link href="/profile" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
             <Image src="/window.svg" alt="Profile" width={22} height={22} />

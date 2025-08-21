@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
-import AppLayout from '@/components/AppLayout';
 
 const fetcher = (url) => fetch(url, { credentials: 'include' }).then((r) => r.json());
 
@@ -17,16 +16,14 @@ export default function ArenaPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [opponentMsg, setOpponentMsg] = useState('');
+  const [agentReply, setAgentReply] = useState('');
 
   useEffect(() => {
     if (!selectedId && items.length) setSelectedId(String(items[0]._id));
   }, [items, selectedId]);
 
-  if (!user) return (
-    <AppLayout>
-      <div className="p-4">Please log in.</div>
-    </AppLayout>
-  );
+  if (!user) return <div className="p-4">Please log in.</div>;
 
   async function createTake(e) {
     e.preventDefault();
@@ -101,9 +98,31 @@ export default function ArenaPage() {
     }
   }
 
+  async function testArgue(e) {
+    e.preventDefault();
+    if (!selected || !selected.agentPrompt) return;
+    setBusy(true);
+    setError('');
+    setAgentReply('');
+    try {
+      const res = await fetch('/api/arena/argue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ takeId: selected._id, opponentMessage: opponentMsg }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to argue');
+      setAgentReply(data.reply || '');
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <AppLayout>
-      <div className="max-w-4xl mx-auto p-3 sm:p-4 space-y-4">
+      <div className="max-w-4xl mx-auto p-3 sm:p-4 space-y-4 app-main-scroll">
         <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">Arena</h1>
         <div className="rounded-xl border border-slate-200 bg-white shadow-soft p-3 sm:p-4">
           <div className="text-sm text-slate-700 mb-2">Create a take (your statement), then the AI will interview you to fully understand it. Once trained, your AI can argue on your behalf.</div>
@@ -174,6 +193,24 @@ export default function ArenaPage() {
                     <div className="text-sm text-slate-700 whitespace-pre-wrap">{selected.profile.summary}</div>
                   </div>
                 )}
+
+                {selected?.agentPrompt && (
+                  <div className="rounded-md border border-slate-200 p-3 bg-white space-y-2">
+                    <div className="text-sm font-medium text-slate-800">Try your AI against a message</div>
+                    <form onSubmit={testArgue} className="flex gap-2">
+                      <input
+                        className="flex-1 rounded-md border border-slate-300 px-3 py-2"
+                        placeholder="Opponent says..."
+                        value={opponentMsg}
+                        onChange={(e) => setOpponentMsg(e.target.value)}
+                      />
+                      <button disabled={busy || !opponentMsg.trim()} className="rounded-md px-4 py-2 btn-mint disabled:opacity-50">Respond</button>
+                    </form>
+                    {agentReply && (
+                      <div className="rounded-md bg-slate-50 border border-slate-200 p-2 text-sm text-slate-800 whitespace-pre-wrap">{agentReply}</div>
+                    )}
+                  </div>
+                )}
               </>
             ) : (
               <div className="text-sm text-slate-600">Select or create a take to begin.</div>
@@ -181,7 +218,6 @@ export default function ArenaPage() {
           </div>
         </div>
       </div>
-    </AppLayout>
   );
 }
 
