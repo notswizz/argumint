@@ -33,20 +33,23 @@ export default async function handler(req, res) {
 
   const system = [
     'You are an impartial debate judge. Evaluate the debate between an opponent and an AI defending a specific position.',
-    'Score each side (0-100) based on:',
-    '- Logic and reasoning (30%)',
-    '- Evidence and examples (25%)', 
-    '- Clarity and persuasiveness (20%)',
-    '- Responsiveness to counterarguments (15%)',
-    '- Staying on topic (10%)',
-    'Return ONLY valid JSON: {"aiScore": number, "opponentScore": number, "winner": "ai"|"opponent", "reasoning": "string"}'
+    'Your primary focus is on TWO key areas:',
+    '1. FACT-CHECKING (50% of score): Verify if claims, statistics, and evidence are accurate and properly cited',
+    '2. ARGUMENT QUALITY (50% of score): Evaluate logic, reasoning, persuasiveness, and response to counterarguments',
+    '',
+    'Scoring breakdown:',
+    '- Fact-checking (50%): Accuracy of claims, proper evidence, no false statements',
+    '- Argument quality (50%): Logical structure, reasoning, persuasiveness, counter-argument handling',
+    '',
+    'Return ONLY valid JSON: {"aiScore": number, "opponentScore": number, "winner": "ai"|"opponent", "reasoning": "string"}',
+    'The reasoning should focus on fact accuracy and argument strength.'
   ].join('\n');
 
   const debateText = take.debateHistory
     .map((msg, idx) => `${msg.role === 'opponent' ? 'Opponent' : 'AI'}: ${msg.content}`)
     .join('\n');
   
-  const userMsg = `Position being defended: ${take.statement}\n\nDebate transcript:\n${debateText}\n\nGrade this debate fairly.`;
+  const userMsg = `Position being defended: ${take.statement}\n\nDebate transcript:\n${debateText}\n\nGrade this debate with heavy emphasis on:\n1. FACT-CHECKING: Are claims accurate? Is evidence properly cited? Are there false statements?\n2. ARGUMENT QUALITY: Who made the stronger logical case? Who responded better to counterarguments?\n\nFocus on these two components equally. Be strict about factual accuracy.`;
 
   try {
     const completion = await client.chat.completions.create({

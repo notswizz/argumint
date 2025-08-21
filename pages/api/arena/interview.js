@@ -37,11 +37,11 @@ export default async function handler(req, res) {
       const key = process.env.OPENAI_API_KEY;
       if (key) {
         const client = new OpenAI({ apiKey: key });
-        const sys = 'You are an interviewing AI. Ask ONE next best question to better understand the user\'s take. Be concrete and concise.';
+        const sys = 'You are having a natural, friendly conversation with someone about their take on an issue. Ask gentle follow-up questions to understand their perspective better, but don\'t push them to elaborate or provide more information than they want to share. Let them express their thoughts naturally. Ask ONE conversational question at a time.';
         const transcript = take.interview
           .map((t) => `${t.role === 'assistant' ? 'AI' : 'User'}: ${t.content}`)
           .join('\n');
-        const userMsg = `User's take: ${take.statement}\nTranscript so far:\n${transcript}\nAsk the next question.`;
+        const userMsg = `User's take: ${take.statement}\n\nConversation so far:\n${transcript}\n\nAsk a natural follow-up question to continue the conversation. Don\'t pressure them to elaborate or research - just let them share what they want to share.`;
         const completion = await client.chat.completions.create({ model: process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini', messages: [
           { role: 'system', content: sys },
           { role: 'user', content: userMsg.slice(0, 45000) },

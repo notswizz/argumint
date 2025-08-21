@@ -54,13 +54,13 @@ export default function AppLayout({ children }) {
       <main className={`mx-auto max-w-none sm:max-w-6xl px-3 sm:px-4 py-3 sm:py-6 pb-28 sm:pb-6 app-main ${(isHome || isArena) ? 'app-main-scroll' : ''}`}>{children}</main>
       <nav className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200/80 bg-white/85 backdrop-blur" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
         <div className="mx-auto max-w-none px-3 py-2 grid grid-cols-3 text-sm text-slate-600">
-          <Link href="/arena" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
-            <Image src="/globe.svg" alt="Arena" width={22} height={22} />
-            <span>Arena</span>
+          <Link href="/arena?tab=train" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
+            <Image src="/file.svg" alt="Train" width={22} height={22} />
+            <span>Train</span>
           </Link>
-          <Link href="/profile" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
-            <Image src="/window.svg" alt="Profile" width={22} height={22} />
-            <span>Profile</span>
+          <Link href="/arena?tab=debate" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
+            <Image src="/globe.svg" alt="Debate" width={22} height={22} />
+            <span>Debate</span>
           </Link>
           <Link href="/profile" className="text-center py-2 hover:text-slate-900 flex flex-col items-center gap-1">
             <Image src="/window.svg" alt="Profile" width={22} height={22} />
